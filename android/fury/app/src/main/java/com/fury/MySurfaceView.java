@@ -78,8 +78,7 @@ public class MySurfaceView extends SurfaceView implements Callback
 		 }
 		 
 		public void run() 
-	    { 	
-			Log.i(TAG,"---RUN----");
+	    {
 	        Paint pt = new Paint();
 			pt.setAntiAlias(true);
 			pt.setColor(Color.GREEN);
@@ -91,6 +90,9 @@ public class MySurfaceView extends SurfaceView implements Callback
 	        
 	        int readSize = 4096;
             byte[] buffer = new byte[readSize];	        // buffer to read stream
+
+			Log.i(TAG,"run:"+urlstr);
+
 
 	        while (true)
 	        {
@@ -117,6 +119,10 @@ public class MySurfaceView extends SurfaceView implements Callback
 	                {
 						if(stop_flag)
 							return;
+
+						if(urlConn == null)
+							continue;
+
 
 						try {
 							read = urlConn.getInputStream().read(buffer, 0, readSize);
@@ -228,7 +234,7 @@ public class MySurfaceView extends SurfaceView implements Callback
 	                    }
 	                }
 	            }
-	            catch (IOException ex)
+	            catch (Exception ex)
 	            {
 	            	urlConn.disconnect();
 	            	ex.printStackTrace();
@@ -266,7 +272,11 @@ public class MySurfaceView extends SurfaceView implements Callback
 		}
 	}
 	public void stop() {
-		//stop_flag = true;
+		if(!stop_flag) {
+			urlConn.disconnect();
+			urlConn = null;
+			stop_flag = true;
+		}
 	}
 	public void surfaceCreated(SurfaceHolder holder) {
 		//new DrawVideo().start();

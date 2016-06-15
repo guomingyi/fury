@@ -8,14 +8,14 @@
     <LinearLayout
         android:id="@+id/video_area_layout"
         android:layout_width="fill_parent"
-        android:layout_height="220dp"
+        android:layout_height="@dimen/video_height"
         android:background="#bbb"
         android:orientation="vertical" >
 
     <com.fury.MySurfaceView
         android:id="@+id/mySurfaceViewVideo"
         android:layout_width="fill_parent"
-        android:layout_height="200dp" />
+        android:layout_height="fill_parent" />
 
     <TextView
         android:id="@+id/notic"
@@ -29,6 +29,7 @@
 
     <!-- 终端信息显示-->
     <RelativeLayout
+        android:id="@+id/console_layout"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="1dp"
@@ -49,6 +50,7 @@
     
     <!-- 主机、端口输入-->
     <RelativeLayout
+        android:id="@+id/host_layout"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="2dp">

@@ -26,8 +26,10 @@ import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.TextView.OnEditorActionListener;
 import android.widget.Toast;
@@ -91,6 +93,8 @@ public class MainActivity extends Activity implements  View.OnTouchListener {
 
   private ControlService mControlService;
 
+  private RelativeLayout console_layout, host_layout;
+
 
   public void toastText(String message)
   {
@@ -114,6 +118,9 @@ public class MainActivity extends Activity implements  View.OnTouchListener {
     if(getRequestedOrientation()!= ActivityInfo.SCREEN_ORIENTATION_PORTRAIT){
       setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
     }
+
+    getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+            WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
     setContentView(R.layout.main);
     initView();
@@ -212,6 +219,10 @@ public class MainActivity extends Activity implements  View.OnTouchListener {
     btn_down.setOnTouchListener(this);
     btn_left.setOnTouchListener(this);
     btn_right.setOnTouchListener(this);
+
+    console_layout = (RelativeLayout)findViewById(R.id.console_layout);
+    host_layout = (RelativeLayout)findViewById(R.id.host_layout);
+
     setBtnEnable(false);
 
 
@@ -229,6 +240,9 @@ public class MainActivity extends Activity implements  View.OnTouchListener {
 	    btn_right.setEnabled(b);
 
         btnConnect.setText(b ? R.string.disconnect : R.string.connect);
+
+    host_layout.setVisibility(b ? View.GONE : View.VISIBLE);
+    console_layout.setVisibility(b ? View.GONE : View.VISIBLE);
   }
   
   
@@ -342,7 +356,7 @@ public class MainActivity extends Activity implements  View.OnTouchListener {
   private void initClientSocketUdp()
   {
     InetAddress local = null;
-    String msg = ""+counter++;
+    String msg = "";
 
     try {
       local = InetAddress.getByName(host_ip);
@@ -417,6 +431,60 @@ private void sendCmdToServerUdp(final String cmd) {
     if(output != null)
       output.print(msg);
   }
+
+
+  @SuppressLint("HandlerLeak")
+  private Handler mHandler = new Handler() {
+    @Override
+    public void handleMessage(Message msg) {
+      switch (msg.what) {
+        case MSG_CLIENT_SOCKET_INIT:
+          if(msg.obj != null && msg.obj.equals(MSG_STOP)) {
+            setBtnEnable(false);
+          }
+          else {
+            new Thread() {
+              @Override
+              public void run() {
+                //initClientSocketTcp();
+                initClientSocketUdp();
+              }
+            }.start();
+          }
+          break;
+
+        case MSG_CONSOLE_INFO_SHOW:
+          if(msg.obj != null) {
+            console_show.setText((String)msg.obj);
+          }
+
+          if(msg.arg1 == 1 && msg.arg2 == 1) {
+            setBtnEnable(true);
+            sf.setUrl(host_ip, CAMERA_SERVER_PORT);
+            sf.start();
+          }
+          else if(msg.arg1 == 1 && msg.arg2 == -1) {
+            setBtnEnable(false);
+            sf.stop();
+          }
+          break;
+
+        case MSG_SEND_CMD_TO_SERVER:
+          if(msg.obj != null) {
+            final String cmd = (String)msg.obj;
+            new Thread() {
+              @Override
+              public void run() {
+               // sendCmdToServerTcp(cmd);
+                sendCmdToServerUdp(cmd);
+              }
+            }.start();
+          }
+          break;
+      }
+    }
+  };
+
 
   public void onDestroy() {
 	closeSocket();
@@ -522,55 +590,6 @@ private void sendCmdToServerUdp(final String cmd) {
   }
 
   private boolean led_state_enable = false;
-
-@SuppressLint("HandlerLeak")
-private Handler mHandler = new Handler() {
-    @Override
-    public void handleMessage(Message msg) {
-    	switch (msg.what) {
-        case MSG_CLIENT_SOCKET_INIT:
-          if(msg.obj != null && msg.obj.equals(MSG_STOP)) {
-            setBtnEnable(false);
-          }
-          else {
-            new Thread() {
-              @Override
-              public void run() {
-                initClientSocketTcp();
-              }
-            }.start();
-          }
-          break;
-
-          case MSG_CONSOLE_INFO_SHOW:
-            if(msg.obj != null) {
-              console_show.setText((String)msg.obj);
-            }
-
-            if(msg.arg1 == 1 && msg.arg2 == 1) {
-              setBtnEnable(true);
-              sf.start();
-            }
-            else if(msg.arg1 == 1 && msg.arg2 == -1) {
-              setBtnEnable(false);
-              sf.stop();
-            }
-            break;
-	    		
-          case MSG_SEND_CMD_TO_SERVER:
-            if(msg.obj != null) {
-            final String cmd = (String)msg.obj;
-              new Thread() {
-                @Override
-                public void run() {
-                  sendCmdToServerTcp(cmd);
-                }
-              }.start();
-            }
-            break;
-    	}
-    }
-};
 
 
   public boolean onKeyDown(int keyCode, KeyEvent event) {

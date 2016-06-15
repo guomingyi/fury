@@ -5,4 +5,7 @@
 
     <dimen name="btn_height">60dp</dimen>
     <dimen name="btn_width">100dp</dimen>
+
+    <dimen name="video_height">350dp</dimen>
+
 </resources>
