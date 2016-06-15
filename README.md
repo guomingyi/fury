@@ -1,13 +1,24 @@
 # fury
 
-#…or create a new repository on the command line
+# address
+https://github.com/guomingyi/fury.git
 
-#echo "# fury" >> README.md
+# Username & password:
+guomingyi
+**********
 
-#git init
 
-git add .
-git commit -m "first commit"
+# Push code:
+
+git add .;
+git commit -am "<xxx>";
 git remote add origin https://github.com/guomingyi/fury.git
-git push -u origin master
+git pull origin master;   
+git push -u origin master;
+
+
+# Code download:
+
+git clone https://github.com/guomingyi/fury.git
+git pull origin master;  
 
