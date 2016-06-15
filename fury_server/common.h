@@ -1,17 +1,31 @@
 #include <linux/input.h>
 #include <softPwm.h>
-
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <signal.h>
+#include <pthread.h> 
 
 #define UBUNTU_HOST 0
 
-#if UBUNTU_HOST
+#if 0//UBUNTU_HOST
 #define pinMode(...)
 #define digitalWrite(...)
 #define wiringPiSetup()
 #endif
 
-#define USE_TCP 1   //TCP or UDP
+#define USE_TCP 0   //TCP or UDP
 
+#if UBUNTU_HOST
+  #define EXEC_CAMERA_CMD ". /home/android/pi/github/mjpg-streamer/exec &"
+#else
+  #define EXEC_CAMERA_CMD ". /home/pi/coding/github/mjpg-streamer/exec &"
+#endif
 
 //#define SERVER_IP_ADDR "172.16.20.112"
 //#define SERVER_IP_ADDR "172.16.21.184"
@@ -51,7 +65,7 @@ int server_socket_init(void);
 void play_mini_fan(int e);
 void stop_camera(void);
 void start_camera(void);
-
+int send_signal_to_proc(int sig, char *proc);
 
 
 #define GPIO_PIN_IN1 29  //马达 N1-N4逻辑输入.高电平使能

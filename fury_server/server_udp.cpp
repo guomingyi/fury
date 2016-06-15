@@ -9,7 +9,7 @@
 #include <termios.h>
 
 #include "common.h"
-#ifndef USE_TCP
+#if !USE_TCP
 
 static struct sockaddr_in server;//服务器地址
 static struct sockaddr_in client;//客户端地址
@@ -25,6 +25,8 @@ int server_socket_init(void)
 		return test();
 	}
 */
+
+
 	int port = DEFAULT_PORT;
 	socklen_t len;
 	char recv_buf[BUFSIZE] = {0};
@@ -54,7 +56,10 @@ int server_socket_init(void)
 
 	len = sizeof(client);
 
+    printf("mini_car_gpio_init\n");
 	mini_car_gpio_init();
+
+    start_camera();
 
 	printf("wainting for connection...\n");
 	while(1) {

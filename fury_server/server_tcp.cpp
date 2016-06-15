@@ -11,90 +11,21 @@
 #include <pthread.h> 
 #include "common.h"
 
-#ifdef USE_TCP
+#if USE_TCP
 
 
 #define PORT DEFAULT_PORT
-#define MAX_BUFFER BUFSIZE//1024
-
-#define EXEC_CAMERA_CMD ". /home/android/pi/github/mjpg-streamer/exec &"
+#define MAX_BUFFER BUFSIZE //1024
 
 int server_sockfd = 0;
-int camera_work_flag = 0;
-
-int exec_system_call(char *cmd) {
-    FILE *pp = NULL;
-
-    printf("system call: %s\n",cmd);
-    if((pp = popen(cmd, "r")) == NULL) {
-        printf("exec :%s fail!\n", cmd);
-        return -1;
-    }
-
-    pclose(pp);
-    return 0;
-}
-
-int get_pid_by_proc_name(char *proc) {
-    char tmp[50] = {0};
-    char cmd[50] = {0};
-    FILE *pp;
-    
-    sprintf(cmd,"ps -a |grep %s |awk '{print $1}' ", proc);
-    if((pp = popen(cmd, "r")) == NULL) {
-        return -1;
-    }
-    while(fgets(tmp, sizeof(tmp), pp) != NULL) {
-        if (tmp[strlen(tmp) - 1] == '\n') {
-            tmp[strlen(tmp) - 1] = '\0'; 
-        }
-    }
-    
-    pclose(pp); 
-    printf("pid: %s\n",tmp);
-    return atoi(tmp);
-}
-
-int send_signal_to_proc(int sig, char *proc) {
-    int pid = get_pid_by_proc_name(proc);
-    if(pid > 0) {
-        printf("kill proc:%s\n", proc);
-        return kill(pid,sig);
-    }
-    printf("kill fail!\n");
-    return -1;
-}
 
 void signalHandler(int sig) {
     if(server_sockfd > 0) {
         printf("Opps! release socket resource! \n");
         close(server_sockfd);
         server_sockfd = 0;
-		stop_camera();
     }
     exit(0);
-}
-
-static void *work_thread(void *args) {
-    if(exec_system_call(EXEC_CAMERA_CMD) == 0) {
-        camera_work_flag = 1;
-    }
-    return NULL;
-}
-
-void start_camera(void) {
-    if(camera_work_flag == 0) {
-        pthread_t thd = 0;
-        pthread_create(&thd, NULL, work_thread, NULL);
-        pthread_join(thd, NULL); 
-    }
-}
-
-void stop_camera(void) {
-    if(camera_work_flag == 1) {
-        send_signal_to_proc(SIGINT, "mjpg_streamer");
-        camera_work_flag = 0;
-    }
 }
 
 int server_socket_init(void)
