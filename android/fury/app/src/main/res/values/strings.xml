@@ -1,0 +1,27 @@
+<resources>
+    <string name="app_name">Remote control</string>
+
+
+    <string name="hello">Hello World, clientActivity!</string>
+    <string name="connect">连接</string>
+    <string name="disconnect">断开连接</string>
+    <string name="send">发送</string>
+
+
+    <string name="str_speed_dec">速度--</string>
+    <string name="str_speed_inc">速度++</string>
+
+    <string name="str_up">前进</string>
+    <string name="str_down">后退</string>
+    <string name="str_left">左转</string>
+    <string name="str_right">右转</string>
+    <string name="str_mid">Led</string>
+    
+    <string name="str_host_ip">主机：</string>
+    <string name="str_host_port">端口：</string>
+    <string name="str_console">终端：</string>
+    <string name="console_default">终端输出：</string>
+    
+    <string name="video_notic">实时Video显示</string>
+
+</resources>
