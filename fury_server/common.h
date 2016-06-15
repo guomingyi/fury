@@ -49,6 +49,10 @@ void enable_mini_car_led();
 void speed_change(int a);
 int server_socket_init(void);
 void play_mini_fan(int e);
+void stop_camera(void);
+void start_camera(void);
+
+
 
 #define GPIO_PIN_IN1 29  //马达 N1-N4逻辑输入.高电平使能
 #define GPIO_PIN_IN2 21
