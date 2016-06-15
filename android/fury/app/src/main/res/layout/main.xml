@@ -11,7 +11,12 @@
         android:layout_height="220dp"
         android:background="#bbb"
         android:orientation="vertical" >
-        
+
+    <com.fury.MySurfaceView
+        android:id="@+id/mySurfaceViewVideo"
+        android:layout_width="fill_parent"
+        android:layout_height="200dp" />
+
     <TextView
         android:id="@+id/notic"
         android:layout_width="wrap_content"

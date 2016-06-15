@@ -36,6 +36,7 @@ import java.util.Arrays;
 
 import com.fury.ControlService.ControlServiceBinder;
 import android.content.Context;
+import com.fury.MySurfaceView;
 
 
 public class MainActivity extends Activity implements  View.OnTouchListener {
@@ -46,11 +47,12 @@ public class MainActivity extends Activity implements  View.OnTouchListener {
   protected static final int MSG_SEND_CMD_TO_SERVER = 2;
 
 //host
-  //private final String SERVER_HOST_IP = "192.168.43.91";
-  private final String SERVER_HOST_IP = "192.168.42.5";
+  private final String SERVER_HOST_IP = "192.168.43.91";
+  //private final String SERVER_HOST_IP = "192.168.42.155";
 
 //port
   private final int SERVER_HOST_PORT = 9426;
+  private final int CAMERA_SERVER_PORT = 8080;
 
 //协议
   private final static String BTN_LED = "1000";
@@ -82,6 +84,8 @@ public class MainActivity extends Activity implements  View.OnTouchListener {
   private String host_ip = null, host_port = null;
   
   private EditText console_show;
+
+  private MySurfaceView sf;
   
   private int speed_count = 0;
 
@@ -160,49 +164,59 @@ public class MainActivity extends Activity implements  View.OnTouchListener {
     host_ip = SERVER_HOST_IP;
     host_ip_view.setText(host_ip);
     host_ip_view.addTextChangedListener(new TextWatcher() {
-		@Override
-		public void onTextChanged(CharSequence s, int start, int before, int count) {}
-		@Override
-		public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-		@Override
-		public void afterTextChanged(Editable s) {
-			host_ip = s.toString();
-			if(s.toString().length() == 0) {
-				host_ip = (String) host_ip_view.getHint();
-			}
-			Log.i(TAG, "host_ip:" +host_ip);
-		}
-	});
+      @Override
+      public void onTextChanged(CharSequence s, int start, int before, int count) {
+      }
+
+      @Override
+      public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+      }
+
+      @Override
+      public void afterTextChanged(Editable s) {
+        host_ip = s.toString();
+        if (s.toString().length() == 0) {
+          host_ip = (String) host_ip_view.getHint();
+        }
+        Log.i(TAG, "host_ip:" + host_ip);
+      }
+    });
     
     host_port_view = (EditText)findViewById(R.id.host_port);
     host_port = SERVER_HOST_PORT+"";
     host_port_view.setText(host_port);
     host_port_view.addTextChangedListener(new TextWatcher() {
-		@Override
-		public void onTextChanged(CharSequence s, int start, int before, int count) {}
-		@Override
-		public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-		@Override
-		public void afterTextChanged(Editable s) {
-			host_port = s.toString();
-			if(s.toString().length() == 0) {
-				host_port = (String) host_port_view.getHint();
-			}
-			Log.i(TAG, "host_port:" +host_port);
-		}
-	});
+      @Override
+      public void onTextChanged(CharSequence s, int start, int before, int count) {
+      }
+
+      @Override
+      public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+      }
+
+      @Override
+      public void afterTextChanged(Editable s) {
+        host_port = s.toString();
+        if (s.toString().length() == 0) {
+          host_port = (String) host_port_view.getHint();
+        }
+        Log.i(TAG, "host_port:" + host_port);
+      }
+    });
 
     btnConnect.setOnTouchListener(this);
     btn_mid.setOnTouchListener(this);
     btn_speed_dec.setOnTouchListener(this);
     btn_speed_inc.setOnTouchListener(this);
-
     btn_up.setOnTouchListener(this);
     btn_down.setOnTouchListener(this);
     btn_left.setOnTouchListener(this);
     btn_right.setOnTouchListener(this);
-
     setBtnEnable(false);
+
+
+    sf = (MySurfaceView)findViewById(R.id.mySurfaceViewVideo);
+    sf.setUrl(host_ip, CAMERA_SERVER_PORT);
   }
 
   private void setBtnEnable(boolean b) {
@@ -351,6 +365,20 @@ public class MainActivity extends Activity implements  View.OnTouchListener {
     sendMessage(cmd);
   }
 
+  private void sendCmdToServerTcp(byte[] cmd) {
+
+    try {
+      byte[] buf = cmd;
+      Socket s = new Socket(host_ip,Integer.parseInt(host_port));
+      s.getOutputStream().write(buf,0,2);
+      s.close();
+      Thread.sleep(100);
+    }
+    catch (Exception e) {
+        Log.i(TAG,"e:"+e.toString());
+    }
+
+  }
 
 private void sendCmdToServerUdp(final String cmd) {
 	if(dSocket == null) {
@@ -500,44 +528,46 @@ private Handler mHandler = new Handler() {
     @Override
     public void handleMessage(Message msg) {
     	switch (msg.what) {
-          case MSG_CLIENT_SOCKET_INIT:
-            if(msg.obj != null && msg.obj.equals(MSG_STOP)) {
-              setBtnEnable(false);
+        case MSG_CLIENT_SOCKET_INIT:
+          if(msg.obj != null && msg.obj.equals(MSG_STOP)) {
+            setBtnEnable(false);
+          }
+          else {
+            new Thread() {
+              @Override
+              public void run() {
+                initClientSocketTcp();
+              }
+            }.start();
+          }
+          break;
+
+          case MSG_CONSOLE_INFO_SHOW:
+            if(msg.obj != null) {
+              console_show.setText((String)msg.obj);
             }
-            else {
+
+            if(msg.arg1 == 1 && msg.arg2 == 1) {
+              setBtnEnable(true);
+              sf.start();
+            }
+            else if(msg.arg1 == 1 && msg.arg2 == -1) {
+              setBtnEnable(false);
+              sf.stop();
+            }
+            break;
+	    		
+          case MSG_SEND_CMD_TO_SERVER:
+            if(msg.obj != null) {
+            final String cmd = (String)msg.obj;
               new Thread() {
                 @Override
                 public void run() {
-                  initClientSocketTcp();
+                  sendCmdToServerTcp(cmd);
                 }
               }.start();
             }
-    		break;
-    		
-	    	case MSG_CONSOLE_INFO_SHOW:
-	    		if(msg.obj != null) {
-	    			console_show.setText((String)msg.obj);
-	    		}
-	    		
-	    		if(msg.arg1 == 1 && msg.arg2 == 1) {
-	    			setBtnEnable(true);
-	    		}
-                else if(msg.arg1 == 1 && msg.arg2 == -1) {
-                  setBtnEnable(false);
-                }
-	    		break;
-	    		
-	    	case MSG_SEND_CMD_TO_SERVER:
-	    		if(msg.obj != null) {
-	    			 final String cmd = (String)msg.obj;
-		   			 new Thread() {
-					      @Override
-					      public void run() {
-                            sendCmdToServerTcp(cmd);
-					      }
-					 }.start();
-	    		}
-	    		break;
+            break;
     	}
     }
 };
