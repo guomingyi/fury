@@ -11,9 +11,17 @@
 #include <signal.h>
 #include <pthread.h> 
 
+//////////////////////////////////////////////////////////////////////
+#define printf(fmt, args...) do{ \
+    if(1) {\
+		printf("\n%s:%d: " fmt "\n", __FILE__, __LINE__, ##args); \
+    } \
+}while(0)
+
+
 #define UBUNTU_HOST 0
 
-#if 0//UBUNTU_HOST
+#if UBUNTU_HOST
 #define pinMode(...)
 #define digitalWrite(...)
 #define wiringPiSetup()
@@ -27,46 +35,14 @@
   #define EXEC_CAMERA_CMD ". /home/pi/coding/github/mjpg-streamer/exec &"
 #endif
 
-//#define SERVER_IP_ADDR "172.16.20.112"
-//#define SERVER_IP_ADDR "172.16.21.184"
-//#define SERVER_IP_ADDR "172.16.21.181"
 #define SERVER_IP_ADDR "192.168.43.91"
 
-#define BUFSIZE  65500
 #define DEFAULT_PORT  9426
 
-//#define SERVER_ADDR_PORT 9002
+#ifdef BUFFER_SIZE
+#undef BUFFER_SIZE
+#endif
 #define BUFFER_SIZE 1024 
-#define FILE_NAME_MAX_SIZE 512 
-
-#define EVT_FORWARD 103
-#define EVT_BACK 108
-#define EVT_LEFT 105
-#define EVT_RIGHT 106
-
-int sendToServer(char *buffer);
-int sendToServer(int evt);
-int sendToServer();
-int sendToServer(input_event *evt);
-int client_socket_init(const char *ip_addr, int port_num);
-int reciver(void);
-int event_register(void);
-void input_event_thread(void);
-void socket_thread(void);
-int sendto_server(char *buf);
-int sendto_server(input_event *evt);
-int do_action(char *cmd, char *info);
-int parse_event(input_event *e, char *str);
-int test(void);
-void enable_mini_car(int enable);
-void enable_mini_car_led();
-void speed_change(int a);
-int server_socket_init(void);
-void play_mini_fan(int e);
-void stop_camera(void);
-void start_camera(void);
-int send_signal_to_proc(int sig, char *proc);
-
 
 #define GPIO_PIN_IN1 29  //马达 N1-N4逻辑输入.高电平使能
 #define GPIO_PIN_IN2 21
@@ -85,24 +61,7 @@ int send_signal_to_proc(int sig, char *proc);
 
 #define PWM_SPEED_CHANGE 1
 
-void myInterrupt0(void);
-void myInterrupt2(void);
-void myInterrupt3(void);
-void mini_car_run_logic(int d);
-int mini_car_gpio_init(void);
- void play_beep(int n);
-
 #define INPUT_DEV "/dev/input/event15"   //gamepad.
-//#define INPUT_DEV "/dev/input/event5"
-//#define INPUT_DEV "/dev/input/event4"
-
-
-#define printf(fmt, args...) do{ \
-    if(1) {\
-		printf("\n%s:%d: " fmt "\n", __FILE__, __LINE__, ##args); \
-    } \
-}while(0)
-
 
 /*
 //协议
@@ -133,8 +92,43 @@ int mini_car_gpio_init(void);
 #define BTN_LEFT_UP  1008
 #define BTN_RIGHT_DOWN  1009
 #define BTN_RIGHT_UP  1010
-#define MSG_STOP  2000
 
+
+#define MSG_STOP  2000
+#define MSG_CAMERA_OPEN  2001
+#define MSG_CAMERA_CLOSE  2002
+
+
+//////////////////////////////////////////////////////////////////////
+
+int sendToServer(char *buffer);
+int sendToServer(int evt);
+int sendToServer();
+int sendToServer(input_event *evt);
+int client_socket_init(const char *ip_addr, int port_num);
+int reciver(void);
+int event_register(void);
+void input_event_thread(void);
+void socket_thread(void);
+int sendto_server(char *buf);
+int sendto_server(input_event *evt);
+int do_action(char *cmd, char *info);
+int parse_event(input_event *e, char *str);
+int test(void);
+void enable_mini_car(int enable);
+void enable_mini_car_led();
+void speed_change(int a);
+int server_socket_init(void);
+void play_mini_fan(int e);
+void stop_camera(void);
+void start_camera(void);
+int send_signal_to_proc(int sig, char *proc);
+void myInterrupt0(void);
+void myInterrupt2(void);
+void myInterrupt3(void);
+void mini_car_run_logic(int d);
+int mini_car_gpio_init(void);
+void play_beep(int n);
 
 
 

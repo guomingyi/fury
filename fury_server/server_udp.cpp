@@ -9,81 +9,127 @@
 #include <termios.h>
 
 #include "common.h"
+
 #if !USE_TCP
 
-static struct sockaddr_in server;//服务器地址
-static struct sockaddr_in client;//客户端地址
-int socket_fd = -1;
+static int socket_fd = -1;
+static int send_socket_fd = -1;
 
-//int main(int argc,char *argv[])
+static int send_socket_init(void)
+{
+    int on = 1; 
+    
+    printf("send_socket_init\n");
+    if(send_socket_fd > 0) {
+    	return 0;
+    }
+    
+    if((send_socket_fd = socket(AF_INET,SOCK_DGRAM,0)) < 0) {
+    	perror("socket");
+    	return -1;
+    }
+    
+    if((setsockopt(send_socket_fd,SOL_SOCKET,SO_REUSEADDR,&on,sizeof(on)))<0)  {  
+    	perror("setsockopt failed");  
+    	return -1;
+    }  
+    
+    return 0;
+}
+
+static int sendToRemoteServer(struct sockaddr_in *client, char *data) {
+    int size = sizeof(struct sockaddr_in);
+    int len = sprintf(data, "reply:%s", data);
+    
+    client->sin_port = htons(DEFAULT_PORT +1);
+    if(sendto(send_socket_fd, data, len, 0, (struct sockaddr*)client, size) < 0) {
+    	printf("sendto err!\n");
+    	return -1;
+    }
+    return 0;
+}
+
+static void signalHandler(int sig) {
+    printf("Opps! release udp socket ! \n");
+    
+    if(socket_fd > 0) {
+        close(socket_fd);
+        socket_fd = 0;
+    }
+    
+    if(send_socket_fd > 0) {
+        close(send_socket_fd);
+        send_socket_fd = 0;
+    }
+    exit(0);
+}
+
 int server_socket_init(void)
 {
-/*
-	printf("argc:%d\n",argc);
+    struct sockaddr_in server;
+    struct sockaddr_in client;
+    
+    int port = DEFAULT_PORT;
+    char recv_buf[BUFFER_SIZE] = {0};
+    char reply_buf[BUFFER_SIZE] = {0};
+    int on = 1;
+    
+    //reigster ctrl+c ,ctrl+z signal.
+    signal(SIGINT, signalHandler); 
+    signal(SIGTSTP, signalHandler);
+    
+    if((socket_fd = socket(AF_INET,SOCK_DGRAM,0)) < 0) {
+    	perror("socket");
+        goto error;
+    }
+     
+    if((setsockopt(socket_fd,SOL_SOCKET,SO_REUSEADDR,&on, sizeof(on)))<0) {  
+    	perror("setsockopt failed");  
+        goto error;  
+    }  
+    
+    memset((char*)&server,0,sizeof(server));
+    server.sin_family = AF_INET;
+    server.sin_addr.s_addr = htonl(INADDR_ANY);
+    server.sin_port = htons(port);
+    
+    if(bind(socket_fd,(struct sockaddr *)&server, sizeof(server))<0) {
+    	perror("bind");
+        goto error;  
+    }
+    
+    mini_car_gpio_init();
+    send_socket_init();
+	
+    while(1) {
+        socklen_t len = sizeof(client);
+        memset((char*)&client, 0, len);
+        memset(recv_buf, 0, BUFFER_SIZE);
+        
+        printf("waiting recv client data...\n");
+        if(recvfrom(socket_fd, recv_buf, CMD_LENGTH, 0,(struct sockaddr*)&client, &len) < 0) {
+        	printf("receive err!\n"); 
+        	break;
+        }
+        
+        printf("receive %s\n", recv_buf); 
+        do_action(recv_buf, NULL);
+        
+        memset(reply_buf, 0, BUFFER_SIZE);
+        //int send_len = sprintf(reply_buf, "reply:%s", recv_buf);
+        if(sendToRemoteServer(&client, reply_buf) < 0) {
+            printf("send err!\n"); 
+        }
+    }
 
-	if(argc == 2) {
-		return test();
-	}
-*/
-
-
-	int port = DEFAULT_PORT;
-	socklen_t len;
-	char recv_buf[BUFSIZE] = {0};
-
-	if((socket_fd = socket(AF_INET,SOCK_DGRAM,0)) < 0)
-	{
-		perror("socket");
-		exit(EXIT_FAILURE);
-	}
-	 
-	int on=1;  
-	if((setsockopt(socket_fd,SOL_SOCKET,SO_REUSEADDR,&on,sizeof(on)))<0)  {  
-		perror("setsockopt failed");  
-		exit(EXIT_FAILURE);  
-	}  
-
-	memset((char*)&server,0,sizeof(server));
-	server.sin_family=AF_INET;
-	server.sin_addr.s_addr=htonl(INADDR_ANY);
-	server.sin_port=htons(port);
-
-	if(bind(socket_fd,(struct sockaddr *)&server,sizeof(server))<0)
-	{
-		perror("bind");
-		exit(EXIT_FAILURE);
-	}
-
-	len = sizeof(client);
-
-    printf("mini_car_gpio_init\n");
-	mini_car_gpio_init();
-
-    start_camera();
-
-	printf("wainting for connection...\n");
-	while(1) {
-		if(recvfrom(socket_fd,recv_buf,BUFSIZE-1,0,(struct sockaddr*)&client,&len) < 0) {
-			break;
-		}
-
-		printf("receive %s\n",recv_buf); 
-
-		char info[BUFSIZE];
-		memset(info, 0, BUFSIZE);
-        do_action(recv_buf,info);
-/*
-		char send_buf[BUFSIZE] = {0};
-		int sn = sprintf(send_buf,"from server:%s",info);
-		if(sendto(socket_fd,send_buf,sn,0,(struct sockaddr *)&client,len)<0) {
-			break;
-		}
-*/
-	}
-
-    printf(" exit.");
-	close(socket_fd);
-	return EXIT_SUCCESS;
+error:
+	
+    if(socket_fd > 0) {
+        close(socket_fd);
+        socket_fd = 0;
+    }
+    
+    return EXIT_SUCCESS;
 }
 
 #endif

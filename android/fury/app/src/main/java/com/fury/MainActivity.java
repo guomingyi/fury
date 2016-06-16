@@ -56,6 +56,8 @@ public class MainActivity extends Activity implements  View.OnTouchListener {
   private final int SERVER_HOST_PORT = 9426;
   private final int CAMERA_SERVER_PORT = 8080;
 
+  private final boolean useUdp = true;
+
 //协议
   private final static String BTN_LED = "1000";
   private final static String BTN_SPEED_DEC = "1001";
@@ -69,6 +71,9 @@ public class MainActivity extends Activity implements  View.OnTouchListener {
   private final static String BTN_RIGHT_DOWN = "1009";
   private final static String BTN_RIGHT_UP = "1010";
   private final static String MSG_STOP = "2000";
+
+  private final static String MSG_CAMERA_OPEN = "2001";
+  private final static String MSG_CAMERA_CLOSE = "2002";
 //协议
   
   private Button btnConnect;
@@ -223,36 +228,35 @@ public class MainActivity extends Activity implements  View.OnTouchListener {
     console_layout = (RelativeLayout)findViewById(R.id.console_layout);
     host_layout = (RelativeLayout)findViewById(R.id.host_layout);
 
-    setBtnEnable(false);
-
-
     sf = (MySurfaceView)findViewById(R.id.mySurfaceViewVideo);
     sf.setUrl(host_ip, CAMERA_SERVER_PORT);
+
+    setBtnEnable(false);
   }
 
   private void setBtnEnable(boolean b) {
-	    btn_mid.setEnabled(b);
-	    btn_speed_dec.setEnabled(b);
-	    btn_speed_inc.setEnabled(b);
-	    btn_up.setEnabled(b);
-	    btn_down.setEnabled(b);
-	    btn_left.setEnabled(b);
-	    btn_right.setEnabled(b);
+    btn_mid.setEnabled(b);
+    btn_speed_dec.setEnabled(b);
+    btn_speed_inc.setEnabled(b);
+    btn_up.setEnabled(b);
+    btn_down.setEnabled(b);
+    btn_left.setEnabled(b);
+    btn_right.setEnabled(b);
 
-        btnConnect.setText(b ? R.string.disconnect : R.string.connect);
-
+    btnConnect.setText(b ? R.string.disconnect : R.string.connect);
     host_layout.setVisibility(b ? View.GONE : View.VISIBLE);
-    console_layout.setVisibility(b ? View.GONE : View.VISIBLE);
+    //console_layout.setVisibility(b ? View.GONE : View.VISIBLE);
   }
   
   
   public void closeSocket()
   {
 	Log.i(TAG, "closeSocket");
-    sendCmdToServerTcp("" + MSG_STOP);
 
     try
     {
+      Thread.sleep(500);
+
       if(output != null) {
         output.close();
         output = null;
@@ -274,7 +278,7 @@ public class MainActivity extends Activity implements  View.OnTouchListener {
       }
 
 	}
-    catch (IOException e)
+    catch (Exception e)
     {
       Log.e(TAG, "close exception: ");
 	}
@@ -353,32 +357,6 @@ public class MainActivity extends Activity implements  View.OnTouchListener {
     mHandler.obtainMessage(MSG_CONSOLE_INFO_SHOW, 1,-1, msg).sendToTarget();
   }
 
-  private void initClientSocketUdp()
-  {
-    InetAddress local = null;
-    String msg = "";
-
-    try {
-      local = InetAddress.getByName(host_ip);
-    } catch (UnknownHostException e) {
-      Log.e(TAG, "Host exception:" + e);
-    }
-    Log.i(TAG, "Host IP："+local.getHostAddress());
-
-    try {
-      dSocket = new DatagramSocket(); // <uses-permission android:name="android.permission.INTERNET" />
-      msg = "初始化成功!";
-    } catch (SocketException e) {
-      msg = ""+e;
-    }
-
-    mHandler.obtainMessage(MSG_CONSOLE_INFO_SHOW, 1,1, msg).sendToTarget();
-  }
-
-  private void sendCmdToServerTcp(final String cmd) {
-    sendMessage(cmd);
-  }
-
   private void sendCmdToServerTcp(byte[] cmd) {
 
     try {
@@ -389,49 +367,106 @@ public class MainActivity extends Activity implements  View.OnTouchListener {
       Thread.sleep(100);
     }
     catch (Exception e) {
-        Log.i(TAG,"e:"+e.toString());
+      Log.i(TAG, "e:" + e.toString());
     }
 
   }
 
+
+  private void initClientSocketUdp()
+  {
+    InetAddress local = null;
+    String msg = "";
+
+    if(dSocket != null) {
+      mHandler.obtainMessage(MSG_SEND_CMD_TO_SERVER, MSG_STOP).sendToTarget();
+      mHandler.obtainMessage(MSG_CLIENT_SOCKET_INIT, -1,0).sendToTarget();
+      closeSocket();
+      dSocket = null;
+      return;
+    }
+
+    try {
+      local = InetAddress.getByName(host_ip);
+    } catch (UnknownHostException e) {
+      Log.e(TAG, "Host exception:" + e);
+    }
+    Log.i(TAG, "Host IP：" + local.getHostAddress());
+
+    try {
+      dSocket = new DatagramSocket(); // <uses-permission android:name="android.permission.INTERNET" />
+    } catch (Exception e) {
+      Log.e(TAG, "exception:" + e);
+      mHandler.obtainMessage(MSG_CLIENT_SOCKET_INIT, -1,0).sendToTarget();
+      return;
+    }
+
+    mHandler.obtainMessage(MSG_CLIENT_SOCKET_INIT, 1,0).sendToTarget();
+    mHandler.obtainMessage(MSG_SEND_CMD_TO_SERVER,MSG_CAMERA_OPEN).sendToTarget();
+  }
+
+  private void sendCmdToServerTcp(final String cmd) {
+    if(output != null)
+      output.print(cmd);
+  }
+
 private void sendCmdToServerUdp(final String cmd) {
 	if(dSocket == null) {
-		mHandler.obtainMessage(MSG_CONSOLE_INFO_SHOW, 
-				"dSocket is null!,please do init!").sendToTarget();
-		return;
+      Log.e(TAG, "dSocket is null");
+      return;
 	}
 	  
 	InetAddress local = null;
-	String msg = "";
 	
 	try {
 	  local = InetAddress.getByName(host_ip);
 	} 
-	catch (UnknownHostException e) {
-	  Log.e(TAG, "Host exception:" + e);
-	  msg = e.toString();
+	catch (Exception e) {
+	  Log.e(TAG, "exception:" + e);
 	}
 	
 	if(local != null) {
-	    DatagramPacket dPacket = new DatagramPacket(cmd.getBytes(), cmd.length(), local, Integer.parseInt(host_port));
-	    try {
-	      dSocket.send(dPacket);
-	      Log.i(TAG, "send success:"+cmd);
-	  msg = "Send :  { " + cmd + " }  to [ "+host_ip+" : "+host_port+" ]";
-	} 
-	catch (IOException e) {
-	  Log.e(TAG, "send fail:"+e);
-	      msg = e.toString();
-	    }
+      DatagramPacket dPacket = new DatagramPacket(cmd.getBytes(), cmd.length(), local, Integer.parseInt(host_port));
+      try {
+        dSocket.send(dPacket);
+      }
+      catch (Exception e) {
+           Log.e(TAG, "send fail:"+e);
+      }
 	}
-	//mHandler.obtainMessage(MSG_CONSOLE_INFO_SHOW, msg).sendToTarget();
 }
   
-  private void sendMessage(String msg) {
-    if(output != null)
-      output.print(msg);
+private void reciverMsgFromServer() {
+  DatagramSocket socket = null;
+
+  try {
+    socket = new DatagramSocket(Integer.parseInt(host_port)+1);
+  }
+  catch (Exception e) {
+    e.printStackTrace();
+    return;
   }
 
+  byte[] buf = new byte[10];
+  Arrays.fill(buf,(byte)0);
+
+  Log.i(TAG, "waiting server reply...");
+
+  while(true)
+  {
+    try {
+      DatagramPacket packet = new DatagramPacket(buf, buf.length);
+      socket.receive(packet);
+
+      String s = new String(packet.getData());
+      Log.i(TAG, "receive from server:"+s+" len:"+packet.getLength());
+    }
+    catch (Exception e) {
+      socket.close();
+      e.printStackTrace();
+    }
+  }
+}
 
   @SuppressLint("HandlerLeak")
   private Handler mHandler = new Handler() {
@@ -439,15 +474,26 @@ private void sendCmdToServerUdp(final String cmd) {
     public void handleMessage(Message msg) {
       switch (msg.what) {
         case MSG_CLIENT_SOCKET_INIT:
-          if(msg.obj != null && msg.obj.equals(MSG_STOP)) {
+          if(msg.arg1 == 1) {
+            setBtnEnable(true);
+            sf.setUrl(host_ip, CAMERA_SERVER_PORT);
+            sf.start();
+          }
+          else if(msg.arg1 == -1) {
             setBtnEnable(false);
+            sf.stop();
           }
           else {
             new Thread() {
               @Override
               public void run() {
-                //initClientSocketTcp();
-                initClientSocketUdp();
+                if(useUdp) {
+                  reciverMsgFromServer();
+                  initClientSocketUdp();
+                }
+                else {
+                  initClientSocketTcp();
+                }
               }
             }.start();
           }
@@ -457,16 +503,6 @@ private void sendCmdToServerUdp(final String cmd) {
           if(msg.obj != null) {
             console_show.setText((String)msg.obj);
           }
-
-          if(msg.arg1 == 1 && msg.arg2 == 1) {
-            setBtnEnable(true);
-            sf.setUrl(host_ip, CAMERA_SERVER_PORT);
-            sf.start();
-          }
-          else if(msg.arg1 == 1 && msg.arg2 == -1) {
-            setBtnEnable(false);
-            sf.stop();
-          }
           break;
 
         case MSG_SEND_CMD_TO_SERVER:
@@ -475,10 +511,18 @@ private void sendCmdToServerUdp(final String cmd) {
             new Thread() {
               @Override
               public void run() {
-               // sendCmdToServerTcp(cmd);
-                sendCmdToServerUdp(cmd);
+                if(useUdp) {
+                  sendCmdToServerUdp(cmd);
+                }
+                else {
+                  sendCmdToServerTcp(cmd);
+                }
               }
             }.start();
+
+            if(msg.obj.equals(MSG_STOP) || msg.obj.equals(MSG_CAMERA_CLOSE)) {
+              sf.stop();
+            }
           }
           break;
       }
@@ -487,8 +531,8 @@ private void sendCmdToServerUdp(final String cmd) {
 
 
   public void onDestroy() {
-	closeSocket();
     super.onDestroy();
+    closeSocket();
   }
 
   @Override
@@ -595,6 +639,9 @@ private void sendCmdToServerUdp(final String cmd) {
   public boolean onKeyDown(int keyCode, KeyEvent event) {
     Log.i(TAG," onKeyDown:"+keyCode);
 
+    if(keyCode == KeyEvent.KEYCODE_BACK) {
+      mHandler.obtainMessage(MSG_SEND_CMD_TO_SERVER, MSG_STOP).sendToTarget();
+    }
     return super.onKeyDown(keyCode, event);
   }
 

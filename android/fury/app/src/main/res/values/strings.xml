@@ -3,8 +3,8 @@
 
 
     <string name="hello">Hello World, clientActivity!</string>
-    <string name="connect">连接</string>
-    <string name="disconnect">断开连接</string>
+    <string name="connect">开始</string>
+    <string name="disconnect">停止</string>
     <string name="send">发送</string>
 
 

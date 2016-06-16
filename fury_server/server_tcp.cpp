@@ -13,13 +13,10 @@
 
 #if USE_TCP
 
-
 #define PORT DEFAULT_PORT
-#define MAX_BUFFER BUFSIZE //1024
-
 int server_sockfd = 0;
 
-void signalHandler(int sig) {
+static void signalHandler(int sig) {
     if(server_sockfd > 0) {
         printf("Opps! release socket resource! \n");
         close(server_sockfd);
@@ -37,7 +34,7 @@ int server_socket_init(void)
     int client_sockfd =0;
     
     int size;
-    char buffer[MAX_BUFFER + 1];
+    char buffer[BUFFER_SIZE + 1];
     struct sockaddr_in client_addr;
     socklen_t len = sizeof(client_addr);
     char reply[] = "ok";
@@ -73,7 +70,7 @@ int server_socket_init(void)
 			start_camera();
         }
 
-        memset(buffer, 0, MAX_BUFFER);
+        memset(buffer, 0, BUFFER_SIZE);
         size = read(client_sockfd, buffer, 4);
         // printf("Got %d bytes: %s\n", size, buffer);
         

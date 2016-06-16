@@ -118,18 +118,17 @@ void enable_mini_car_led(void)
 
 void play_beep(int n)
 {  
-int i;
-pinMode(GPIO_PIN_BEEP, OUTPUT) ;
-
-for(i = 0; i < n; i++) {
-	digitalWrite(GPIO_PIN_BEEP,0);
-	delay(200);
-	digitalWrite(GPIO_PIN_BEEP,1);
-    delay(200);
+    int i;
+    pinMode(GPIO_PIN_BEEP, OUTPUT) ;
+    
+    for(i = 0; i < n; i++) {
+        digitalWrite(GPIO_PIN_BEEP,0);
+        delay(200);
+        digitalWrite(GPIO_PIN_BEEP,1);
+        delay(200);
+    }
 }
 
-
-}
 void play_mini_fan(int e)
 {  
     pinMode(GPIO_PIN_MINI_FAN, OUTPUT) ;
@@ -337,108 +336,62 @@ int parse_event(input_event *e, char *str)
 
 int do_action(char *cmd, char *info)
 {
-int evt_up = 0;
-
-/*
-if(strcmp(cmd, BTN_LED) == 0) {
-    enable_mini_car_led();
-}
-else 
-if(strcmp(cmd, BTN_SPEED_DEC) == 0) {
-    speed_change(0);
-}
-else 
-if(strcmp(cmd, BTN_SPEED_INC) == 0) {
-    speed_change(1);
-}
-
-else 
-if(strcmp(cmd, BTN_UP_DOWN) == 0) {
-    mini_car_run_logic(1);
-}
-else 
-if(strcmp(cmd, BTN_UP_UP) == 0) {
-    evt_up = 1;
-}
-
-else 
-if(strcmp(cmd, BTN_DOWN_DOWN) == 0) {
-    mini_car_run_logic(2);
-}
-else 
-if(strcmp(cmd, BTN_DOWN_UP) == 0) {
-    evt_up = 1;
-}
-
-else 
-if(strcmp(cmd, BTN_LEFT_DOWN) == 0) {
-    mini_car_run_logic(3);
-}
-else 
-if(strcmp(cmd, BTN_LEFT_UP) == 0) {
-    evt_up = 1;
-}
-
-else 
-if(strcmp(cmd, BTN_RIGHT_DOWN) == 0) {
-    mini_car_run_logic(4);
-}
-else 
-if(strcmp(cmd, BTN_RIGHT_UP) == 0) {
-    evt_up = 1;
-}
-*/
-
-int tmp = atoi(cmd);
-
-printf("do_action:cmd:%d\n",tmp);
-
-switch(tmp)
-{
-    case BTN_LED:
-    	enable_mini_car_led();
-    	break;
-    case BTN_SPEED_DEC:
-    	speed_change(0);
-    	break;
-    case BTN_SPEED_INC:
-    	speed_change(1);
-    	break;
-    case BTN_UP_DOWN:
-    	mini_car_run_logic(1);
-    	break;
-    case BTN_UP_UP:
-    	evt_up = 1;
-    	break;
-    case BTN_DOWN_DOWN:
-    	mini_car_run_logic(2);
-    	break;
-    case BTN_DOWN_UP:
-    	evt_up = 1;
-    	break;
-    case BTN_LEFT_DOWN:
-    	mini_car_run_logic(3);
-    	break;
-    case BTN_LEFT_UP:
-    	evt_up = 1;
-    	break;
-    case BTN_RIGHT_DOWN:
-    	mini_car_run_logic(4);
-    	break;
-    case BTN_RIGHT_UP:
-    	evt_up = 1;
-    	break;
-    default:
-    	break;
-}
-
-
-if(evt_up == 1) {
-	mini_car_run_logic(5);
-}
-
-
-return 0;
+    int evt_up = 0;
+    int tmp = atoi(cmd);
+    
+    switch(tmp)
+    {
+        case BTN_LED:
+        	enable_mini_car_led();
+        	break;
+        case BTN_SPEED_DEC:
+        	speed_change(0);
+        	break;
+        case BTN_SPEED_INC:
+        	speed_change(1);
+        	break;
+        case BTN_UP_DOWN:
+        	mini_car_run_logic(1);
+        	break;
+        case BTN_UP_UP:
+        	evt_up = 1;
+        	break;
+        case BTN_DOWN_DOWN:
+        	mini_car_run_logic(2);
+        	break;
+        case BTN_DOWN_UP:
+        	evt_up = 1;
+        	break;
+        case BTN_LEFT_DOWN:
+        	mini_car_run_logic(3);
+        	break;
+        case BTN_LEFT_UP:
+        	evt_up = 1;
+        	break;
+        case BTN_RIGHT_DOWN:
+        	mini_car_run_logic(4);
+        	break;
+        case BTN_RIGHT_UP:
+        	evt_up = 1;
+        	break;
+        case MSG_CAMERA_OPEN:
+        	start_camera();
+        	break;
+		case MSG_STOP:
+        case MSG_CAMERA_CLOSE:
+        	stop_camera();
+        	break;
+        default:
+        	break;
+    }
+    
+    
+    if(evt_up == 1) {
+    	mini_car_run_logic(5);
+    }
+    
+    
+    return 0;
 }
 
 
@@ -480,15 +433,19 @@ int get_pid_by_proc_name(char *proc) {
 int send_signal_to_proc(int sig, char *proc) {
     int pid = get_pid_by_proc_name(proc);
     if(pid > 0) {
-        printf("kill proc:%s\n", proc);
+        printf("kill : %s success!\n", proc);
         return kill(pid,sig);
     }
-    printf("kill fail!\n");
+    printf("kill : %s fail!\n",proc);
     return -1;
 }
 
+static int kill_process(char *proc) {
+    return send_signal_to_proc(SIGINT, proc);
+}
+
 static void *work_thread(void *args) {
-    if(exec_system_call(EXEC_CAMERA_CMD) == 0) {
+    if(exec_system_call((char *)EXEC_CAMERA_CMD) == 0) {
         camera_work_flag = 1;
     }
     return NULL;
@@ -504,7 +461,7 @@ void start_camera(void) {
 
 void stop_camera(void) {
     if(camera_work_flag == 1) {
-        send_signal_to_proc(SIGINT, "mjpg_streamer");
+        kill_process((char *)"mjpg_streamer");
         camera_work_flag = 0;
     }
 }
