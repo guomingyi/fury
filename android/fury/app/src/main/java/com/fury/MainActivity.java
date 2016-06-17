@@ -39,6 +39,8 @@ import java.util.Arrays;
 import com.fury.ControlService.ControlServiceBinder;
 import android.content.Context;
 import com.fury.MySurfaceView;
+import com.fury.MySurfaceViewTest;
+
 
 
 public class MainActivity extends Activity implements  View.OnTouchListener {
@@ -50,13 +52,15 @@ public class MainActivity extends Activity implements  View.OnTouchListener {
 
 //host
   private final String SERVER_HOST_IP = "192.168.43.91";
-  //private final String SERVER_HOST_IP = "192.168.42.155";
+  //private final String SERVER_HOST_IP = "192.168.42.170";
 
 //port
-  private final int SERVER_HOST_PORT = 9426;
-  private final int CAMERA_SERVER_PORT = 8080;
+  private final static int SERVER_HOST_PORT = 9426;
+  private final static int CAMERA_SERVER_PORT = 8080;
+  public final static int CAMERA_SERVER_SEND_PORT = SERVER_HOST_PORT+1;
 
   private final boolean useUdp = true;
+  private final boolean UdpJpgTest = true;
 
 //协议
   private final static String BTN_LED = "1000";
@@ -92,7 +96,9 @@ public class MainActivity extends Activity implements  View.OnTouchListener {
   
   private EditText console_show;
 
-  private MySurfaceView sf;
+  private MySurfaceView sf = null;
+  private MySurfaceViewTest sft = null;
+
   
   private int speed_count = 0;
 
@@ -228,8 +234,16 @@ public class MainActivity extends Activity implements  View.OnTouchListener {
     console_layout = (RelativeLayout)findViewById(R.id.console_layout);
     host_layout = (RelativeLayout)findViewById(R.id.host_layout);
 
-    sf = (MySurfaceView)findViewById(R.id.mySurfaceViewVideo);
-    sf.setUrl(host_ip, CAMERA_SERVER_PORT);
+    if(!UdpJpgTest) {
+      sf = (MySurfaceView)findViewById(R.id.mySurfaceViewVideo);
+      sf.setUrl(host_ip, CAMERA_SERVER_PORT);
+      sf.setVisibility(View.VISIBLE);
+    }
+    else {
+      sft = (MySurfaceViewTest)findViewById(R.id.mySurfaceViewVideoTest);
+      sft.setUrl(host_ip, CAMERA_SERVER_PORT);
+      sft.setVisibility(View.VISIBLE);
+    }
 
     setBtnEnable(false);
   }
@@ -375,9 +389,6 @@ public class MainActivity extends Activity implements  View.OnTouchListener {
 
   private void initClientSocketUdp()
   {
-    InetAddress local = null;
-    String msg = "";
-
     if(dSocket != null) {
       mHandler.obtainMessage(MSG_SEND_CMD_TO_SERVER, MSG_STOP).sendToTarget();
       mHandler.obtainMessage(MSG_CLIENT_SOCKET_INIT, -1,0).sendToTarget();
@@ -385,13 +396,6 @@ public class MainActivity extends Activity implements  View.OnTouchListener {
       dSocket = null;
       return;
     }
-
-    try {
-      local = InetAddress.getByName(host_ip);
-    } catch (UnknownHostException e) {
-      Log.e(TAG, "Host exception:" + e);
-    }
-    Log.i(TAG, "Host IP：" + local.getHostAddress());
 
     try {
       dSocket = new DatagramSocket(); // <uses-permission android:name="android.permission.INTERNET" />
@@ -423,31 +427,38 @@ private void sendCmdToServerUdp(final String cmd) {
 	} 
 	catch (Exception e) {
 	  Log.e(TAG, "exception:" + e);
+      return;
 	}
-	
-	if(local != null) {
+
+  //while(true) {
+
       DatagramPacket dPacket = new DatagramPacket(cmd.getBytes(), cmd.length(), local, Integer.parseInt(host_port));
       try {
+        Log.i(TAG, "send to server:"+cmd);
         dSocket.send(dPacket);
       }
       catch (Exception e) {
-           Log.e(TAG, "send fail:"+e);
+        Log.e(TAG, "send fail:"+e);
       }
-	}
+
+  //}
+
+
 }
   
 private void reciverMsgFromServer() {
   DatagramSocket socket = null;
 
   try {
-    socket = new DatagramSocket(Integer.parseInt(host_port)+1);
+   // socket = new DatagramSocket(Integer.parseInt(host_port)+1);
+    socket = new DatagramSocket(9426);
   }
   catch (Exception e) {
     e.printStackTrace();
     return;
   }
 
-  byte[] buf = new byte[10];
+  byte[] buf = new byte[65000];
   Arrays.fill(buf,(byte)0);
 
   Log.i(TAG, "waiting server reply...");
@@ -458,8 +469,8 @@ private void reciverMsgFromServer() {
       DatagramPacket packet = new DatagramPacket(buf, buf.length);
       socket.receive(packet);
 
-      String s = new String(packet.getData());
-      Log.i(TAG, "receive from server:"+s+" len:"+packet.getLength());
+      //String s = new String(packet.getData());
+      Log.i(TAG, "receive from server:"+" len:"+packet.getLength());
     }
     catch (Exception e) {
       socket.close();
@@ -476,19 +487,29 @@ private void reciverMsgFromServer() {
         case MSG_CLIENT_SOCKET_INIT:
           if(msg.arg1 == 1) {
             setBtnEnable(true);
-            sf.setUrl(host_ip, CAMERA_SERVER_PORT);
-            sf.start();
+            if(sf != null) {
+              sf.setUrl(host_ip, CAMERA_SERVER_PORT);
+              sf.start();
+            }
+            if(sft != null) {
+              sft.start(host_ip, CAMERA_SERVER_PORT);
+            }
           }
           else if(msg.arg1 == -1) {
             setBtnEnable(false);
-            sf.stop();
+            if(sf != null) {
+              sf.stop();
+            }
+            if(sft != null) {
+              sft.stop();
+            }
           }
           else {
             new Thread() {
               @Override
               public void run() {
                 if(useUdp) {
-                  reciverMsgFromServer();
+                 // reciverMsgFromServer();
                   initClientSocketUdp();
                 }
                 else {
@@ -521,7 +542,8 @@ private void reciverMsgFromServer() {
             }.start();
 
             if(msg.obj.equals(MSG_STOP) || msg.obj.equals(MSG_CAMERA_CLOSE)) {
-              sf.stop();
+              if(sf != null)
+                sf.stop();
             }
           }
           break;
@@ -641,6 +663,12 @@ private void reciverMsgFromServer() {
 
     if(keyCode == KeyEvent.KEYCODE_BACK) {
       mHandler.obtainMessage(MSG_SEND_CMD_TO_SERVER, MSG_STOP).sendToTarget();
+      if(sf != null) {
+        sf.stop();
+      }
+      if(sft != null) {
+        sft.stop();
+      }
     }
     return super.onKeyDown(keyCode, event);
   }

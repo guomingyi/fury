@@ -79,6 +79,14 @@ int main(int argc,char *argv[])
 {
 	printf("%s\n",__func__);
 
+#if 1
+{
+	int test_socket_init(void);
+	return test_socket_init();
+}
+	
+#endif
+
 	pthread_create(&work_thd, NULL, work_main_thread, NULL);
 	pthread_create(&socket_thd, NULL, server_socket_thread, NULL);
 

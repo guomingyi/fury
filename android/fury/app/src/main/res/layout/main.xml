@@ -15,8 +15,13 @@
     <com.fury.MySurfaceView
         android:id="@+id/mySurfaceViewVideo"
         android:layout_width="fill_parent"
-        android:layout_height="fill_parent" />
-
+        android:layout_height="fill_parent"
+        android:visibility="gone"/>
+    <com.fury.MySurfaceViewTest
+        android:id="@+id/mySurfaceViewVideoTest"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:visibility="gone"/>
     <TextView
         android:id="@+id/notic"
         android:layout_width="wrap_content"
@@ -24,6 +29,7 @@
         android:textSize="16dp"
         android:layout_marginTop="100dp"
         android:layout_gravity="center"
+        android:visibility="gone"
         android:text="@string/video_notic" />
     </LinearLayout>
 
