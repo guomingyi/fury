@@ -52,32 +52,69 @@ public class MainActivity extends Activity implements  View.OnTouchListener {
 
 //host
   private final String SERVER_HOST_IP = "192.168.43.91";
+//private final String SERVER_HOST_IP = "192.168.1.105";
   //private final String SERVER_HOST_IP = "192.168.42.170";
 
 //port
-  private final static int SERVER_HOST_PORT = 9426;
+  private final static int SERVER_HOST_PORT = 9080;
   private final static int CAMERA_SERVER_PORT = 8080;
   public final static int CAMERA_SERVER_SEND_PORT = SERVER_HOST_PORT+1;
 
   private final boolean useUdp = true;
   private final boolean UdpJpgTest = true;
 
-//协议
-  private final static String BTN_LED = "1000";
-  private final static String BTN_SPEED_DEC = "1001";
-  private final static String BTN_SPEED_INC = "1002";
-  private final static String BTN_UP_DOWN = "1003";
-  private final static String BTN_UP_UP = "1004";
-  private final static String BTN_DOWN_DOWN = "1005";
-  private final static String BTN_DOWN_UP = "1006";
-  private final static String BTN_LEFT_DOWN = "1007";
-  private final static String BTN_LEFT_UP = "1008";
-  private final static String BTN_RIGHT_DOWN = "1009";
-  private final static String BTN_RIGHT_UP = "1010";
-  private final static String MSG_STOP = "2000";
+  //协议
+  private final static int CMD_LENGTH = 4;
 
-  private final static String MSG_CAMERA_OPEN = "2001";
-  private final static String MSG_CAMERA_CLOSE = "2002";
+  private final static int MSG_TANK_STOP_RUN =  1099;
+  private final static int MSG_TANK_GO_FORWARD =  1100;
+  private final static int MSG_TANK_GO_BACK =  1101;
+  private final static int MSG_TANK_GO_LEFT =  1102;
+  private final static int MSG_TANK_GO_RIGHT =  1103;
+
+  private final static int MSG_LED_OPEN =  1104;
+  private final static int MSG_LED_CLOSE =  1105;
+
+  private final static int MSG_FAN_OPEN =  1106;
+  private final static int MSG_FAN_CLOSE =  1107;
+
+  private final static int MSG_BEEP_PLAY =  1108;
+  private final static int MSG_BEEP_PLAY_REPEED =  1109;
+
+  private final static int MSG_TANK_SPEED_INC =  1110;
+  private final static int MSG_TANK_SPEED_DEC =  1111;
+  private final static int MSG_GET_SPEED_VALUE =  1112;
+
+  private final static int MSG_SYS_SLEEP = 2000;
+  private final static int MSG_SYS_SHUT_DOWN =  2001;
+  private final static int MSG_SYS_REBOOT =  2002;
+  private final static int MSG_CAMERA_OPEN =  2003;
+  private final static int MSG_CAMERA_CLOSE =  2004;
+
+
+  private final static String BTN_LED = String.valueOf(MSG_LED_OPEN);
+
+  private final static String BTN_SPEED_DEC = String.valueOf(MSG_TANK_SPEED_DEC);
+  private final static String BTN_SPEED_INC = String.valueOf(MSG_TANK_SPEED_INC);
+
+  private final static String BTN_UP_DOWN = String.valueOf(MSG_TANK_GO_FORWARD);
+  private final static String BTN_UP_UP = String.valueOf(MSG_TANK_STOP_RUN);
+
+  private final static String BTN_DOWN_DOWN = String.valueOf(MSG_TANK_GO_BACK);
+  private final static String BTN_DOWN_UP = String.valueOf(MSG_TANK_STOP_RUN);
+
+  private final static String BTN_LEFT_DOWN = String.valueOf(MSG_TANK_GO_LEFT);
+  private final static String BTN_LEFT_UP = String.valueOf(MSG_TANK_STOP_RUN);
+
+  private final static String BTN_RIGHT_DOWN = String.valueOf(MSG_TANK_GO_RIGHT);
+  private final static String BTN_RIGHT_UP = String.valueOf(MSG_TANK_STOP_RUN);
+
+
+  private final static String MSG_STOP = String.valueOf(MSG_SYS_SLEEP);
+  private final static String MSG_CAM_OPEN = String.valueOf(MSG_CAMERA_OPEN);
+  private final static String MSG_CAM_CLOSE = String.valueOf(MSG_CAMERA_CLOSE);
+  private final static String MSG_FAN = String.valueOf(MSG_FAN_OPEN);
+  private final static String MSG_BEEP = String.valueOf(MSG_BEEP_PLAY);
 //协议
   
   private Button btnConnect;
@@ -406,7 +443,7 @@ public class MainActivity extends Activity implements  View.OnTouchListener {
     }
 
     mHandler.obtainMessage(MSG_CLIENT_SOCKET_INIT, 1,0).sendToTarget();
-    mHandler.obtainMessage(MSG_SEND_CMD_TO_SERVER,MSG_CAMERA_OPEN).sendToTarget();
+    mHandler.obtainMessage(MSG_SEND_CMD_TO_SERVER,MSG_CAM_OPEN).sendToTarget();
   }
 
   private void sendCmdToServerTcp(final String cmd) {
@@ -430,9 +467,10 @@ private void sendCmdToServerUdp(final String cmd) {
       return;
 	}
 
-  //while(true) {
+ // while(dSocket != null) {
 
       DatagramPacket dPacket = new DatagramPacket(cmd.getBytes(), cmd.length(), local, Integer.parseInt(host_port));
+     // DatagramPacket dPacket = new DatagramPacket(cmd.getBytes(), cmd.length(), local,/* Integer.parseInt(host_port)*/8080);
       try {
         Log.i(TAG, "send to server:"+cmd);
         dSocket.send(dPacket);
@@ -441,7 +479,7 @@ private void sendCmdToServerUdp(final String cmd) {
         Log.e(TAG, "send fail:"+e);
       }
 
-  //}
+ // }
 
 
 }
@@ -541,7 +579,7 @@ private void reciverMsgFromServer() {
               }
             }.start();
 
-            if(msg.obj.equals(MSG_STOP) || msg.obj.equals(MSG_CAMERA_CLOSE)) {
+            if(msg.obj.equals(MSG_STOP) || msg.obj.equals(MSG_CAM_CLOSE)) {
               if(sf != null)
                 sf.stop();
             }

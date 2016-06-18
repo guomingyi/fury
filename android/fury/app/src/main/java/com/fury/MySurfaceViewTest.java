@@ -185,7 +185,7 @@ public class MySurfaceViewTest extends SurfaceView implements Callback
 		if(stop_flag) {
 			host_ip = ip;
 			host_port = port;
-			sendToMjpgServer(ip, port);
+			//sendToMjpgServer(ip, port);
 			drawVideoSurface();
 			stop_flag = false;
 		}
@@ -230,13 +230,14 @@ public class MySurfaceViewTest extends SurfaceView implements Callback
 		new Thread() {
 			@Override
 			public void run() {
+
 				Paint pt = new Paint();
 				pt.setAntiAlias(true);
 				pt.setColor(Color.GREEN);
 				pt.setTextSize(20);
 				pt.setStrokeWidth(1);
 
-				int bufSize = 512 * 1024;
+				int bufSize = 512 * 1024*4;
 				byte[] buf = new byte[bufSize];
 
 				Arrays.fill(buf, (byte) 0);
@@ -251,24 +252,36 @@ public class MySurfaceViewTest extends SurfaceView implements Callback
 				//recivFromMjpgServer(host_ip, 9427);
 
 				DatagramSocket recv_socket = null;
-				InetAddress local;
 
 				try {
-					recv_socket = new DatagramSocket(MainActivity.CAMERA_SERVER_SEND_PORT);
+					recv_socket = new DatagramSocket(MainActivity.CAMERA_SERVER_SEND_PORT+1);
 				}
 				catch (Exception e) {
 					Log.i(TAG, "e"+e.toString());
 					return;
 				}
 
+				DatagramSocket dSocket = null;
+				InetAddress local1 = null;
+				String cmd = "1001";
+				DatagramPacket dPacket = null;
+
+				try {
+					local1 = InetAddress.getByName(host_ip);
+					dPacket = new DatagramPacket(cmd.getBytes(), cmd.length(), local1,MainActivity.CAMERA_SERVER_SEND_PORT);
+					dSocket = new DatagramSocket();
+					dSocket.send(dPacket);
+				}
+				catch (Exception e) {
+					Log.e(TAG, "exception:" + e);
+					return;
+				}
 				DatagramPacket packet2 = new DatagramPacket(buf, buf.length);
 
 				while (true) {
-					if(mUdpSend != null && mUdpSend.getLoop() == false) {
-						break;
-					}
 
 					try {
+
 						recv_socket.receive(packet2);
 
 						fps++;
@@ -297,6 +310,8 @@ public class MySurfaceViewTest extends SurfaceView implements Callback
 
 						canvas.drawText(str_fps, 2, 22, pt);
 						sfh.unlockCanvasAndPost(canvas);
+
+						dSocket.send(dPacket);
 					}
 					catch (Exception e) {
 						e.printStackTrace();
