@@ -156,10 +156,33 @@ private void drawVideoSurface(boolean r) {
 
 			times = System.currentTimeMillis();
 
+			byte[] show_buf = new byte[1024*1024];
+			int show_length = 0;
+
 			while(true) {
 				try {
+
                     DatagramPacket recv_pkt = new DatagramPacket(frame_buf, frame_buf.length);
 					recv_socket.receive(recv_pkt);
+
+					byte[] tmp = recv_pkt.getData();
+
+					//pkg idx,number.
+					if(tmp[1] <= tmp[0]) {
+						Log.i(TAG, " pkg :"+tmp[0]+"/"+tmp[1]);
+
+                        System.arraycopy(tmp,2,show_buf,show_length,recv_pkt.getLength());
+						show_length += recv_pkt.getLength()-2;
+
+						if(tmp[1] != tmp[0]){
+							continue;
+						}
+					}
+
+					Log.i(TAG, "show_length:"+show_length);
+					//send_socket.send(send_pkt);
+					//if(true)
+					//	continue;
 
 					fps++;
 					span = System.currentTimeMillis() -times;
@@ -172,9 +195,7 @@ private void drawVideoSurface(boolean r) {
 					canvas = sfh.lockCanvas();
 					canvas.drawColor(Color.RED);
 
-					Log.i(TAG, " recv_pkt.length:" + recv_pkt.getLength());
-
-					Bitmap bmp = BitmapFactory.decodeStream(new ByteArrayInputStream(recv_pkt.getData()));
+					Bitmap bmp = BitmapFactory.decodeStream(new ByteArrayInputStream(show_buf));
 
 					int width = mScreenWidth;
 					int height = mScreenHeight;
@@ -192,6 +213,8 @@ private void drawVideoSurface(boolean r) {
 						break;
 					}
 					send_socket.send(send_pkt);
+					Arrays.fill(show_buf, (byte) 0);
+					show_length = 0;
 				}
 				catch (Exception e) {
 					e.printStackTrace();

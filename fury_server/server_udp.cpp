@@ -39,7 +39,7 @@ static int send_socket_init(void)
 }
 
 static int sendToRemoteServer(struct sockaddr_in *client, char *data) {
-	char buf[10] = {0};
+	char buf[BUFFER_SIZE] = {0};
     int len = sprintf(buf, "reply:%s", data);
 	int size = sizeof(struct sockaddr_in);
 
@@ -114,7 +114,6 @@ int server_socket_init(void)
         memset((char*)&client, 0, len);
         memset(recv_buf, 0, BUFFER_SIZE);
         
-        printf("waiting recv client data...\n");
         if(recvfrom(socket_fd, recv_buf, CMD_LENGTH, 0,(struct sockaddr*)&client, &len) < 0) {
         	printf("receive err!\n"); 
         	break;

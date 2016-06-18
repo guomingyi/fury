@@ -44,17 +44,6 @@ static int send_socket_init(void)
     return 0;
 }
 
-static int sendToRemoteServer(struct sockaddr_in *client, char *data) {
-    int size = sizeof(struct sockaddr_in);
-    int len = sprintf(data, "1001");
-    
-    client->sin_port = htons(8080);
-    if(sendto(send_socket_fd, data, len, 0, (struct sockaddr*)client, size) < 0) {
-    	printf("sendto err!\n");
-    	return -1;
-    }
-    return 0;
-}
 
 static void signalHandler(int sig) {
     printf("Opps! release udp socket ! \n");
@@ -99,6 +88,54 @@ return 0;
 }
 #endif
 
+#define PKG_BUF_SIZE 4096 //byte
+#define TAG_SIZE 2
+#define TOTAL_SEND_SIZE (TAG_SIZE+PKG_BUF_SIZE)
+
+
+static int sendToRemoteServer(struct sockaddr_in *client, char *frame, int len) {
+    int size = sizeof(struct sockaddr_in);
+    client->sin_port = htons(9091);
+
+
+	int i,j = 0;
+	int mj = len % PKG_BUF_SIZE;
+	int n = (len / PKG_BUF_SIZE + (mj > 0 ? 1 : 0));
+	
+	char *p = frame;
+	char s_buf[TOTAL_SEND_SIZE*5] = {0};
+	
+	printf("sendToRemoteServer:port:%d,len:%d,n:%d,mj:%d\n",9091,len,n,mj);
+	
+	int send_len = 0;
+	
+	for(i = 1; i <= n; i++) {
+	
+		memset(s_buf, 0, TOTAL_SEND_SIZE);
+		s_buf[0] = n;
+		s_buf[1] = i;
+	
+		if(i == n && mj > 0) {
+			send_len = (len -PKG_BUF_SIZE*(i-1)+1+1);
+			memcpy(s_buf+TAG_SIZE, (void*)p, send_len);
+		}
+		else {
+			send_len = TOTAL_SEND_SIZE;
+			memcpy(s_buf+TAG_SIZE, (void*)p, send_len-1-1);
+		}
+
+		printf("%d/%d/%d\n%s\n",i,n,send_len,s_buf);
+		if(sendto(send_socket_fd, s_buf, send_len, 0, (struct sockaddr*)client, size) < 0) {
+			perror("sendto");
+			return -1;
+		}
+
+		p = p+PKG_BUF_SIZE;
+	
+	}
+
+    return 0;
+}
 
 
 char recv_buf[BUFFER_SIZE] = {0};
@@ -110,11 +147,37 @@ int test_socket_init(void)
     
     int port = DEFAULT_PORT;
     int on = 1;
-    char send_buf[10+1];
 	int recv_len = 0;
 	socklen_t len = sizeof(client);
 
-    
+	#define buf_size (8194)
+	char send_buf[buf_size+1] = {0};
+	int i,j = 0;
+
+
+	for(i = 0; i < buf_size; i++) {
+		if(i < 1024)
+	    	send_buf[i] = 'a';
+		else
+		if(i < 2048)
+			send_buf[i] = 'b';
+		else
+		if(i < 3072)
+			send_buf[i] = 'c';
+		else
+		if(i < 4096)
+			send_buf[i] = 'd';
+		else{
+			send_buf[i] = 'e';
+			j++;
+		}
+			
+
+	}
+
+    printf("%s,j:%d\n",send_buf,j);
+	
+	
     //reigster ctrl+c ,ctrl+z signal.
     signal(SIGINT, signalHandler); 
     signal(SIGTSTP, signalHandler);
@@ -143,15 +206,9 @@ int test_socket_init(void)
     memset((char*)&client,0,sizeof(client));
     client.sin_family = AF_INET;
     client.sin_addr.s_addr = inet_addr(MJPG_IP_ADDR);
-    client.sin_port = htons(8080);
+    client.sin_port = htons(9090);
 	
     while(1) {
-		printf("send data...\n");
-		
-        memset(send_buf, 0, sizeof(send_buf));
-        if(sendToRemoteServer(&client, send_buf) < 0) {
-            printf("send err!\n"); 
-        }
 
         memset((char*)&client, 0, len);
         memset(recv_buf, 0, BUFFER_SIZE);
@@ -163,7 +220,13 @@ int test_socket_init(void)
         }
 		
         printf("receive: %s, recv_len:%d\n", recv_buf,recv_len); 
-		writeToFile(recv_buf, recv_len);
+		//writeToFile(recv_buf, recv_len);
+		
+       // memset(send_buf, 0, sizeof(send_buf));
+        if(sendToRemoteServer(&client, send_buf, buf_size) < 0) {
+            printf("send err!\n"); 
+        }
+		
     }
 
 error:

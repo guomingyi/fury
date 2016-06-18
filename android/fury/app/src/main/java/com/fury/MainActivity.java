@@ -500,15 +500,16 @@ private void reciverMsgFromServer() {
     return;
   }
 
-  byte[] buf = new byte[10];
+  byte[] buf = new byte[1026];
   Log.i(TAG, "waiting server reply...");
 
   while(true)
   {
     try {
+      Arrays.fill(buf,(byte)0);
       DatagramPacket packet = new DatagramPacket(buf, buf.length);
       socket.receive(packet);
-      Log.i(TAG, "receive from server:"+new String(packet.getData())+" len:"+packet.getLength());
+      Log.i(TAG, ""+new String(packet.getData())+"   "+packet.getLength());
     }
     catch (Exception e) {
       socket.close();

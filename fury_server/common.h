@@ -19,7 +19,7 @@
 }while(0)
 
 
-#define UBUNTU_HOST 1
+#define UBUNTU_HOST 0
 
 #if UBUNTU_HOST
 #define pinMode(...)
@@ -30,7 +30,7 @@
 #define USE_TCP 0   //TCP or UDP
 
 #if UBUNTU_HOST
-  #define EXEC_CAMERA_CMD ". /home/android/pi/github/mjpg-streamer/exec udp &"
+  #define EXEC_CAMERA_CMD ". /home/android/pi/github/mjpg-streamer/exec &"
 #else
   #define EXEC_CAMERA_CMD "/home/pi/coding/github/mjpg-streamer/exec udp &"
 #endif
