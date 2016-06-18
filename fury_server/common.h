@@ -32,12 +32,12 @@
 #if UBUNTU_HOST
   #define EXEC_CAMERA_CMD ". /home/android/pi/github/mjpg-streamer/exec &"
 #else
-  #define EXEC_CAMERA_CMD ". /home/pi/coding/github/mjpg-streamer/exec &"
+  #define EXEC_CAMERA_CMD ". /home/pi/coding/github/mjpg-streamer/exec udp &"
 #endif
 
 #define SERVER_IP_ADDR "192.168.43.91"
 
-#define DEFAULT_PORT  9426
+#define DEFAULT_PORT  9080
 
 #ifdef BUFFER_SIZE
 #undef BUFFER_SIZE
@@ -63,42 +63,65 @@
 
 #define INPUT_DEV "/dev/input/event15"   //gamepad.
 
-/*
+///////////////////////////////////////////////////////////////////////
 //协议
-  private final static String BTN_LED = "1000";
-  private final static String BTN_SPEED_DEC = "1001";
-  private final static String BTN_SPEED_INC = "1002";
-  private final static String BTN_UP_DOWN = "1003";
-  private final static String BTN_UP_UP = "1004";
-  private final static String BTN_DOWN_DOWN = "1005";
-  private final static String BTN_DOWN_UP = "1006";
-  private final static String BTN_LEFT_DOWN = "1007";
-  private final static String BTN_LEFT_UP = "1008";
-  private final static String BTN_RIGHT_DOWN = "1009";
-  private final static String BTN_RIGHT_UP = "1010";
+/*
+private final static int CMD_LENGTH = 4;
 
+private final static int MSG_TANK_STOP_RUN =  1099;
+private final static int MSG_TANK_GO_FORWARD =  1100;
+private final static int MSG_TANK_GO_BACK =  1101;
+private final static int MSG_TANK_GO_LEFT =  1102;
+private final static int MSG_TANK_GO_RIGHT =  1103;
+
+private final static int MSG_LED_OPEN =  1104;
+private final static int MSG_LED_CLOSE =  1105;
+
+private final static int MSG_FAN_OPEN =  1106;
+private final static int MSG_FAN_CLOSE =  1107;
+
+private final static int MSG_BEEP_PLAY =  1108;
+private final static int MSG_BEEP_PLAY_REPEED =  1109;
+
+private final static int MSG_TANK_SPEED_INC =  1110;
+private final static int MSG_TANK_SPEED_DEC =  1111;
+private final static int MSG_GET_SPEED_VALUE =  1112;
+
+private final static int MSG_SYS_SLEEP = 2000;
+private final static int MSG_SYS_SHUT_DOWN =  2001;
+private final static int MSG_SYS_REBOOT =  2002;
+private final static int MSG_CAMERA_OPEN =  2003;
+private final static int MSG_CAMERA_CLOSE =  2004;
 */
 
 #define CMD_LENGTH 4
 
-#define BTN_LED  1000
-#define BTN_SPEED_DEC  1001
-#define BTN_SPEED_INC  1002
-#define BTN_UP_DOWN  1003
-#define BTN_UP_UP  1004
-#define BTN_DOWN_DOWN  1005
-#define BTN_DOWN_UP  1006
-#define BTN_LEFT_DOWN  1007
-#define BTN_LEFT_UP  1008
-#define BTN_RIGHT_DOWN  1009
-#define BTN_RIGHT_UP  1010
+#define MSG_TANK_STOP_RUN  1099
+#define MSG_TANK_GO_FORWARD  1100
+#define MSG_TANK_GO_BACK  1101
+#define MSG_TANK_GO_LEFT  1102
+#define MSG_TANK_GO_RIGHT  1103
 
+#define MSG_LED_OPEN  1104
+#define MSG_LED_CLOSE  1105
 
-#define MSG_STOP  2000
-#define MSG_CAMERA_OPEN  2001
-#define MSG_CAMERA_CLOSE  2002
+#define MSG_FAN_OPEN  1106
+#define MSG_FAN_CLOSE  1107
 
+#define MSG_BEEP_PLAY  1108
+#define MSG_BEEP_PLAY_REPEED  1109
 
+#define MSG_TANK_SPEED_INC  1110
+#define MSG_TANK_SPEED_DEC  1111
+#define MSG_GET_SPEED_VALUE  1112
+
+#define MSG_SYS_SLEEP  2000
+#define MSG_SYS_SHUT_DOWN  2001
+#define MSG_SYS_REBOOT  2002
+#define MSG_CAMERA_OPEN  2003
+#define MSG_CAMERA_CLOSE  2004
+
+//协议
 //////////////////////////////////////////////////////////////////////
 
 int sendToServer(char *buffer);
@@ -115,8 +138,8 @@ int sendto_server(input_event *evt);
 int do_action(char *cmd, char *info);
 int parse_event(input_event *e, char *str);
 int test(void);
-void enable_mini_car(int enable);
-void enable_mini_car_led();
+void enable_tank(int enable);
+void enable_tank_led();
 void speed_change(int a);
 int server_socket_init(void);
 void play_mini_fan(int e);
@@ -126,8 +149,8 @@ int send_signal_to_proc(int sig, char *proc);
 void myInterrupt0(void);
 void myInterrupt2(void);
 void myInterrupt3(void);
-void mini_car_run_logic(int d);
-int mini_car_gpio_init(void);
+void tank_run_logic(int d);
+int tank_gpio_init(void);
 void play_beep(int n);
 
 

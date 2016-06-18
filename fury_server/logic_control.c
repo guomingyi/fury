@@ -17,16 +17,16 @@
 #include "common.h"
 
 int gpio_init_flag = 0;
-int mini_car_enable_flag = 0;
+int tank_enable_flag = 0;
 int led_flag = 0, beep_flag = 0, fan_flag = 0;
 int pwmValue = 0;
 
 int curr_cmd = 1; //default 
 
-void mini_car_run_logic(int d) 
+void tank_run_logic(int d) 
 {
     if(gpio_init_flag == 0) {
-        mini_car_gpio_init();
+        tank_gpio_init();
         delay(100) ;
     }
 
@@ -37,7 +37,7 @@ void mini_car_run_logic(int d)
     {
         case 1://前进
         printf("-----前进----\n");
-        enable_mini_car(1);
+        enable_tank(1);
         digitalWrite(GPIO_PIN_IN1,1);
         digitalWrite(GPIO_PIN_IN2,0);
         digitalWrite(GPIO_PIN_IN3,1);
@@ -46,7 +46,7 @@ void mini_car_run_logic(int d)
         
         case 2://后退
         printf("-----后退----\n");
-        enable_mini_car(1);
+        enable_tank(1);
         digitalWrite(GPIO_PIN_IN1,0);
         digitalWrite(GPIO_PIN_IN2,1);
         digitalWrite(GPIO_PIN_IN3,0);
@@ -55,7 +55,7 @@ void mini_car_run_logic(int d)
         
         case 4://左转
         printf("-----左转----\n");
-        enable_mini_car(1);
+        enable_tank(1);
         digitalWrite(GPIO_PIN_IN1,0);
         digitalWrite(GPIO_PIN_IN2,1);
         digitalWrite(GPIO_PIN_IN3,1);
@@ -64,7 +64,7 @@ void mini_car_run_logic(int d)
         
         case 3://右转
         printf("-----右转----\n");
-        enable_mini_car(1);
+        enable_tank(1);
         digitalWrite(GPIO_PIN_IN1,1);
         digitalWrite(GPIO_PIN_IN2,0);
         digitalWrite(GPIO_PIN_IN3,0);
@@ -73,7 +73,7 @@ void mini_car_run_logic(int d)
         
         case 5://停止
         printf("-----停止----\n");
-        enable_mini_car(0);
+        enable_tank(0);
         break;
     }
     
@@ -81,7 +81,7 @@ void mini_car_run_logic(int d)
 }
 
 
-void enable_mini_car(int enable)
+void enable_tank(int enable)
 {
     if(enable) {
     #ifndef PWM_SPEED_CHANGE
@@ -101,7 +101,7 @@ void enable_mini_car(int enable)
     }
 }
 
-void enable_mini_car_led(void)
+void enable_tank_led(void)
 {  
     if(led_flag == 0) {
         play_beep(1);
@@ -139,7 +139,7 @@ void play_mini_fan(int e)
         digitalWrite(GPIO_PIN_MINI_FAN,1);
     }
 }
-int mini_car_gpio_init(void)
+int tank_gpio_init(void)
 {
 #if !UBUNTU_HOST
     printf("gpio 初始化：%s,%d\n",__func__,gpio_init_flag);
@@ -154,7 +154,7 @@ int mini_car_gpio_init(void)
     pinMode(GPIO_PIN_IN2, OUTPUT);
     pinMode(GPIO_PIN_IN3, OUTPUT);
     pinMode(GPIO_PIN_IN4, OUTPUT);
-    enable_mini_car(0);
+    enable_tank(0);
     
     pinMode(GPIO_PIN_LED, OUTPUT);
     digitalWrite(GPIO_PIN_LED,1);
@@ -195,7 +195,7 @@ void myInterrupt0(void) {
 
     if(tmp == 0) {
 		speed_change(1);
-		mini_car_run_logic(1);
+		tank_run_logic(1);
 	}
 }
 void myInterrupt2(void) {
@@ -205,7 +205,7 @@ void myInterrupt2(void) {
 
     if(tmp == 0) {
 		speed_change(0);
-		mini_car_run_logic(1);
+		tank_run_logic(1);
 	}
 }
 void myInterrupt3(void) {
@@ -213,7 +213,7 @@ void myInterrupt3(void) {
 
     int tmp = digitalRead(3);
     printf ("===tmp:%d====\n", tmp) ;
-    //mini_car_run_logic(tmp == 0 ? 3 : 5);
+    //tank_run_logic(tmp == 0 ? 3 : 5);
        digitalWrite(GPIO_PIN_BEEP, tmp);
        digitalWrite(GPIO_PIN_LED,tmp);
 }
@@ -230,7 +230,7 @@ void speed_change(int a) {
         play_beep(1);
         softPwmWrite(GPIO_PIN_EN1, pwmValue) ;
 		softPwmWrite(GPIO_PIN_EN2, pwmValue) ;
-       // mini_car_run_logic(curr_cmd);
+       // tank_run_logic(curr_cmd);
 	}
 	else {
 		pwmValue -= CHANGE_STEP;
@@ -242,7 +242,7 @@ void speed_change(int a) {
         play_beep(1);
         softPwmWrite(GPIO_PIN_EN1, pwmValue) ;
         softPwmWrite(GPIO_PIN_EN2, pwmValue) ;
-       // mini_car_run_logic(curr_cmd);
+       // tank_run_logic(curr_cmd);
 	}
 #endif
 }
@@ -278,7 +278,7 @@ int test(void)
     pinMode(GPIO_PIN_IN2, OUTPUT);
     pinMode(GPIO_PIN_IN3, OUTPUT);
     pinMode(GPIO_PIN_IN4, OUTPUT);
-    mini_car_run_logic(5);
+    tank_run_logic(5);
 
 //Interrupt
 	wiringPiISR(0, INT_EDGE_BOTH, &myInterrupt0) ;
@@ -341,56 +341,60 @@ int do_action(char *cmd, char *info)
     
     switch(tmp)
     {
-        case BTN_LED:
-        	enable_mini_car_led();
+        case MSG_LED_OPEN:
+        case MSG_LED_CLOSE:
+        	enable_tank_led();
         	break;
-        case BTN_SPEED_DEC:
+
+        case MSG_BEEP_PLAY:
+        	play_beep(1);
+        	break;
+
+        case MSG_BEEP_PLAY_REPEED:
+			play_beep(3);
+        	break;
+
+        case MSG_TANK_SPEED_DEC:
         	speed_change(0);
         	break;
-        case BTN_SPEED_INC:
+
+        case MSG_TANK_SPEED_INC:
         	speed_change(1);
         	break;
-        case BTN_UP_DOWN:
-        	mini_car_run_logic(1);
+
+        case MSG_TANK_GO_FORWARD:
+        	tank_run_logic(1);
         	break;
-        case BTN_UP_UP:
-        	evt_up = 1;
+
+        case MSG_TANK_GO_BACK:
+        	tank_run_logic(2);
         	break;
-        case BTN_DOWN_DOWN:
-        	mini_car_run_logic(2);
+
+        case MSG_TANK_GO_LEFT:
+        	tank_run_logic(3);
         	break;
-        case BTN_DOWN_UP:
-        	evt_up = 1;
+
+        case MSG_TANK_GO_RIGHT:
+        	tank_run_logic(4);
         	break;
-        case BTN_LEFT_DOWN:
-        	mini_car_run_logic(3);
+
+        case MSG_TANK_STOP_RUN:
+        	tank_run_logic(5);
         	break;
-        case BTN_LEFT_UP:
-        	evt_up = 1;
-        	break;
-        case BTN_RIGHT_DOWN:
-        	mini_car_run_logic(4);
-        	break;
-        case BTN_RIGHT_UP:
-        	evt_up = 1;
-        	break;
+
         case MSG_CAMERA_OPEN:
         	start_camera();
         	break;
-		case MSG_STOP:
+
+		case MSG_SYS_SLEEP:
         case MSG_CAMERA_CLOSE:
         	stop_camera();
         	break;
+
         default:
         	break;
     }
-    
-    
-    if(evt_up == 1) {
-    	mini_car_run_logic(5);
-    }
-    
-    
+
     return 0;
 }
 

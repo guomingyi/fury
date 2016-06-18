@@ -59,8 +59,13 @@ static void *work_main_thread(void *args)
 	while(1) 
 	{
 		double tmp = getCpuTmp();
-        play_mini_fan(((int)tmp >= 42) ? 1 : 0);
-		sleep(2);
+                if(tmp >= 42) {
+                    play_mini_fan(((int)tmp >= 42) ? 1 : 0);
+		    sleep(180);
+                }
+		else {
+		    sleep(5);
+		}
 	}
 
     pthread_exit(NULL);   
@@ -79,7 +84,7 @@ int main(int argc,char *argv[])
 {
 	printf("%s\n",__func__);
 
-#if 1
+#if 0
 {
 	int test_socket_init(void);
 	return test_socket_init();

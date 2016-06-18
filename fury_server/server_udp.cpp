@@ -98,7 +98,7 @@ int server_socket_init(void)
         goto error;  
     }
     
-    mini_car_gpio_init();
+    tank_gpio_init();
     send_socket_init();
 	
     while(1) {
@@ -115,6 +115,7 @@ int server_socket_init(void)
         printf("receive %s\n", recv_buf); 
         do_action(recv_buf, NULL);
         
+
         memset(reply_buf, 0, BUFFER_SIZE);
         //int send_len = sprintf(reply_buf, "reply:%s", recv_buf);
         if(sendToRemoteServer(&client, reply_buf) < 0) {
