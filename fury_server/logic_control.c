@@ -334,11 +334,12 @@ int parse_event(input_event *e, char *str)
 }
 
 
-int do_action(char *cmd, char *info)
+int do_action(char *cmd)
 {
     int evt_up = 0;
     int tmp = atoi(cmd);
-    
+
+	printf("do_action cmd:%d\n", tmp);
     switch(tmp)
     {
         case MSG_LED_OPEN:
@@ -398,19 +399,35 @@ int do_action(char *cmd, char *info)
     return 0;
 }
 
+int do_action(int cmd) {
+    char buf[CMD_LENGTH+1] = {0};
+    if(sprintf(buf,"%d",cmd) > 0) {
+    	do_action(buf);
+    }
+}
+
 
 int camera_work_flag = 0;
 
 int exec_system_call(char *cmd) {
+#if 1
+	int ret = -1;
+	if((ret = system(cmd)) < 0) {
+		printf("system call: %s :%d\n",cmd, ret);
+		return ret;
+	}
+#else
     FILE *pp = NULL;
 
-    printf("system call: %s\n",cmd);
     if((pp = popen(cmd, "r")) == NULL) {
         printf("exec :%s fail!\n", cmd);
         return -1;
     }
-
+	
+	printf("system call: %s success!\n",cmd);
+	
     pclose(pp);
+#endif
     return 0;
 }
 
@@ -464,9 +481,9 @@ void start_camera(void) {
 }
 
 void stop_camera(void) {
-    if(camera_work_flag == 1) {
+    //if(camera_work_flag == 1) {
         kill_process((char *)"mjpg_streamer");
         camera_work_flag = 0;
-    }
+    //}
 }
 

@@ -1,5 +1,10 @@
 <resources>
-    <string name="app_name">Remote control</string>
+    <string name="host_ip">192.168.42.28</string>
+    <string name="host_port">9090</string>
+    <string name="cam_host_port">8080</string>
+
+
+    <string name="app_name">fury</string>
 
 
     <string name="hello">Hello World, clientActivity!</string>

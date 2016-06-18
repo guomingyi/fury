@@ -78,7 +78,7 @@ int server_socket_init(void)
             continue;
         }
         
-        do_action(buffer, NULL);
+        do_action(buffer);
 		write(client_sockfd, reply, 2);
 
         if(atoi(buffer) == MSG_STOP) {

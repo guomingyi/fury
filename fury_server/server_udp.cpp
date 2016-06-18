@@ -7,6 +7,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <termios.h>
+#include <sys/wait.h>
 
 #include "common.h"
 
@@ -38,11 +39,12 @@ static int send_socket_init(void)
 }
 
 static int sendToRemoteServer(struct sockaddr_in *client, char *data) {
-    int size = sizeof(struct sockaddr_in);
-    int len = sprintf(data, "reply:%s", data);
-    
+	char buf[10] = {0};
+    int len = sprintf(buf, "reply:%s", data);
+	int size = sizeof(struct sockaddr_in);
+
     client->sin_port = htons(DEFAULT_PORT +1);
-    if(sendto(send_socket_fd, data, len, 0, (struct sockaddr*)client, size) < 0) {
+    if(sendto(send_socket_fd, buf, len, 0, (struct sockaddr*)client, size) < 0) {
     	printf("sendto err!\n");
     	return -1;
     }
@@ -61,6 +63,10 @@ static void signalHandler(int sig) {
         close(send_socket_fd);
         send_socket_fd = 0;
     }
+	
+	int pid, status;
+	waitpid(0, &status, WNOHANG);
+	
     exit(0);
 }
 
@@ -100,8 +106,10 @@ int server_socket_init(void)
     
     tank_gpio_init();
     send_socket_init();
+	do_action(MSG_CAMERA_CLOSE);
 	
     while(1) {
+		
         socklen_t len = sizeof(client);
         memset((char*)&client, 0, len);
         memset(recv_buf, 0, BUFFER_SIZE);
@@ -113,12 +121,8 @@ int server_socket_init(void)
         }
         
         printf("receive %s\n", recv_buf); 
-        do_action(recv_buf, NULL);
-        
-
-        memset(reply_buf, 0, BUFFER_SIZE);
-        //int send_len = sprintf(reply_buf, "reply:%s", recv_buf);
-        if(sendToRemoteServer(&client, reply_buf) < 0) {
+        do_action(recv_buf);
+        if(sendToRemoteServer(&client, recv_buf) < 0) {
             printf("send err!\n"); 
         }
     }

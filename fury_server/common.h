@@ -19,7 +19,7 @@
 }while(0)
 
 
-#define UBUNTU_HOST 0
+#define UBUNTU_HOST 1
 
 #if UBUNTU_HOST
 #define pinMode(...)
@@ -30,14 +30,14 @@
 #define USE_TCP 0   //TCP or UDP
 
 #if UBUNTU_HOST
-  #define EXEC_CAMERA_CMD ". /home/android/pi/github/mjpg-streamer/exec &"
+  #define EXEC_CAMERA_CMD ". /home/android/pi/github/mjpg-streamer/exec udp &"
 #else
-  #define EXEC_CAMERA_CMD ". /home/pi/coding/github/mjpg-streamer/exec udp &"
+  #define EXEC_CAMERA_CMD "/home/pi/coding/github/mjpg-streamer/exec udp &"
 #endif
 
 #define SERVER_IP_ADDR "192.168.43.91"
 
-#define DEFAULT_PORT  9080
+#define DEFAULT_PORT  9090
 
 #ifdef BUFFER_SIZE
 #undef BUFFER_SIZE
@@ -135,7 +135,8 @@ void input_event_thread(void);
 void socket_thread(void);
 int sendto_server(char *buf);
 int sendto_server(input_event *evt);
-int do_action(char *cmd, char *info);
+int do_action(char *cmd);
+int do_action(int cmd);
 int parse_event(input_event *e, char *str);
 int test(void);
 void enable_tank(int enable);

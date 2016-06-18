@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.io.PrintStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
@@ -49,16 +50,12 @@ public class MainActivity extends Activity implements  View.OnTouchListener {
   protected static final int MSG_CLIENT_SOCKET_INIT = 0;
   protected static final int MSG_CONSOLE_INFO_SHOW = 1;
   protected static final int MSG_SEND_CMD_TO_SERVER = 2;
+  protected static final int MSG_RUN_CAM_SURFACE = 3;
+  protected static final int MSG_STOP_CAM_SURFACE = 4;
 
-//host
-  private final String SERVER_HOST_IP = "192.168.43.91";
-//private final String SERVER_HOST_IP = "192.168.1.105";
-  //private final String SERVER_HOST_IP = "192.168.42.170";
-
-//port
-  private final static int SERVER_HOST_PORT = 9080;
-  private final static int CAMERA_SERVER_PORT = 8080;
-  public final static int CAMERA_SERVER_SEND_PORT = SERVER_HOST_PORT+1;
+//camera port
+  public static int CAM_SERVER_PORT = 8080;
+  public static int CAM_SERVER_UDP_RECV_PORT = CAM_SERVER_PORT +1;
 
   private final boolean useUdp = true;
   private final boolean UdpJpgTest = true;
@@ -66,30 +63,30 @@ public class MainActivity extends Activity implements  View.OnTouchListener {
   //协议
   private final static int CMD_LENGTH = 4;
 
-  private final static int MSG_TANK_STOP_RUN =  1099;
-  private final static int MSG_TANK_GO_FORWARD =  1100;
-  private final static int MSG_TANK_GO_BACK =  1101;
-  private final static int MSG_TANK_GO_LEFT =  1102;
-  private final static int MSG_TANK_GO_RIGHT =  1103;
+  private final static int MSG_TANK_STOP_RUN = 1099;
+  private final static int MSG_TANK_GO_FORWARD = 1100;
+  private final static int MSG_TANK_GO_BACK = 1101;
+  private final static int MSG_TANK_GO_LEFT = 1102;
+  private final static int MSG_TANK_GO_RIGHT = 1103;
 
-  private final static int MSG_LED_OPEN =  1104;
-  private final static int MSG_LED_CLOSE =  1105;
+  private final static int MSG_LED_OPEN = 1104;
+  private final static int MSG_LED_CLOSE = 1105;
 
-  private final static int MSG_FAN_OPEN =  1106;
-  private final static int MSG_FAN_CLOSE =  1107;
+  private final static int MSG_FAN_OPEN = 1106;
+  private final static int MSG_FAN_CLOSE = 1107;
 
-  private final static int MSG_BEEP_PLAY =  1108;
-  private final static int MSG_BEEP_PLAY_REPEED =  1109;
+  private final static int MSG_BEEP_PLAY = 1108;
+  private final static int MSG_BEEP_PLAY_REPEED = 1109;
 
-  private final static int MSG_TANK_SPEED_INC =  1110;
-  private final static int MSG_TANK_SPEED_DEC =  1111;
-  private final static int MSG_GET_SPEED_VALUE =  1112;
+  private final static int MSG_TANK_SPEED_INC = 1110;
+  private final static int MSG_TANK_SPEED_DEC = 1111;
+  private final static int MSG_GET_SPEED_VALUE = 1112;
 
   private final static int MSG_SYS_SLEEP = 2000;
-  private final static int MSG_SYS_SHUT_DOWN =  2001;
-  private final static int MSG_SYS_REBOOT =  2002;
-  private final static int MSG_CAMERA_OPEN =  2003;
-  private final static int MSG_CAMERA_CLOSE =  2004;
+  private final static int MSG_SYS_SHUT_DOWN = 2001;
+  private final static int MSG_SYS_REBOOT = 2002;
+  private final static int MSG_CAMERA_OPEN = 2003;
+  private final static int MSG_CAMERA_CLOSE = 2004;
 
 
   private final static String BTN_LED = String.valueOf(MSG_LED_OPEN);
@@ -170,6 +167,14 @@ public class MainActivity extends Activity implements  View.OnTouchListener {
     getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
             WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
+    host_ip = getResources().getString(R.string.host_ip);
+    host_port = getResources().getString(R.string.host_port);
+    final String port = getResources().getString(R.string.cam_host_port);
+    if(port != null) {
+      CAM_SERVER_PORT = Integer.parseInt(port);
+      CAM_SERVER_UDP_RECV_PORT = CAM_SERVER_PORT+1;
+    }
+
     setContentView(R.layout.main);
     initView();
 
@@ -216,7 +221,6 @@ public class MainActivity extends Activity implements  View.OnTouchListener {
     console_show = (EditText)findViewById(R.id.console_show);
     
     host_ip_view = (EditText)findViewById(R.id.host_ip);
-    host_ip = SERVER_HOST_IP;
     host_ip_view.setText(host_ip);
     host_ip_view.addTextChangedListener(new TextWatcher() {
       @Override
@@ -238,7 +242,6 @@ public class MainActivity extends Activity implements  View.OnTouchListener {
     });
     
     host_port_view = (EditText)findViewById(R.id.host_port);
-    host_port = SERVER_HOST_PORT+"";
     host_port_view.setText(host_port);
     host_port_view.addTextChangedListener(new TextWatcher() {
       @Override
@@ -273,12 +276,12 @@ public class MainActivity extends Activity implements  View.OnTouchListener {
 
     if(!UdpJpgTest) {
       sf = (MySurfaceView)findViewById(R.id.mySurfaceViewVideo);
-      sf.setUrl(host_ip, CAMERA_SERVER_PORT);
+      sf.setUrl(host_ip, CAM_SERVER_PORT);
       sf.setVisibility(View.VISIBLE);
     }
     else {
       sft = (MySurfaceViewTest)findViewById(R.id.mySurfaceViewVideoTest);
-      sft.setUrl(host_ip, CAMERA_SERVER_PORT);
+      sft.setHostIp(host_ip);
       sft.setVisibility(View.VISIBLE);
     }
 
@@ -420,30 +423,31 @@ public class MainActivity extends Activity implements  View.OnTouchListener {
     catch (Exception e) {
       Log.i(TAG, "e:" + e.toString());
     }
-
   }
 
 
   private void initClientSocketUdp()
   {
     if(dSocket != null) {
-      mHandler.obtainMessage(MSG_SEND_CMD_TO_SERVER, MSG_STOP).sendToTarget();
-      mHandler.obtainMessage(MSG_CLIENT_SOCKET_INIT, -1,0).sendToTarget();
+      mHandler.obtainMessage(MSG_CLIENT_SOCKET_INIT, -1).sendToTarget();
       closeSocket();
-      dSocket = null;
       return;
     }
 
     try {
       dSocket = new DatagramSocket(); // <uses-permission android:name="android.permission.INTERNET" />
+      dSocket.setReuseAddress(true);
     } catch (Exception e) {
       Log.e(TAG, "exception:" + e);
-      mHandler.obtainMessage(MSG_CLIENT_SOCKET_INIT, -1,0).sendToTarget();
+      e.printStackTrace();
       return;
     }
 
-    mHandler.obtainMessage(MSG_CLIENT_SOCKET_INIT, 1,0).sendToTarget();
-    mHandler.obtainMessage(MSG_SEND_CMD_TO_SERVER,MSG_CAM_OPEN).sendToTarget();
+    mHandler.obtainMessage(MSG_CLIENT_SOCKET_INIT, 1).sendToTarget();
+    reciverMsgFromServer();
+
+
+
   }
 
   private void sendCmdToServerTcp(final String cmd) {
@@ -470,7 +474,6 @@ private void sendCmdToServerUdp(final String cmd) {
  // while(dSocket != null) {
 
       DatagramPacket dPacket = new DatagramPacket(cmd.getBytes(), cmd.length(), local, Integer.parseInt(host_port));
-     // DatagramPacket dPacket = new DatagramPacket(cmd.getBytes(), cmd.length(), local,/* Integer.parseInt(host_port)*/8080);
       try {
         Log.i(TAG, "send to server:"+cmd);
         dSocket.send(dPacket);
@@ -488,17 +491,16 @@ private void reciverMsgFromServer() {
   DatagramSocket socket = null;
 
   try {
-   // socket = new DatagramSocket(Integer.parseInt(host_port)+1);
-    socket = new DatagramSocket(9426);
+    socket = new DatagramSocket(null);
+    socket.setReuseAddress(true);
+    socket.bind(new InetSocketAddress(Integer.parseInt(host_port)+1));
   }
   catch (Exception e) {
     e.printStackTrace();
     return;
   }
 
-  byte[] buf = new byte[65000];
-  Arrays.fill(buf,(byte)0);
-
+  byte[] buf = new byte[10];
   Log.i(TAG, "waiting server reply...");
 
   while(true)
@@ -506,9 +508,7 @@ private void reciverMsgFromServer() {
     try {
       DatagramPacket packet = new DatagramPacket(buf, buf.length);
       socket.receive(packet);
-
-      //String s = new String(packet.getData());
-      Log.i(TAG, "receive from server:"+" len:"+packet.getLength());
+      Log.i(TAG, "receive from server:"+new String(packet.getData())+" len:"+packet.getLength());
     }
     catch (Exception e) {
       socket.close();
@@ -522,69 +522,62 @@ private void reciverMsgFromServer() {
     @Override
     public void handleMessage(Message msg) {
       switch (msg.what) {
-        case MSG_CLIENT_SOCKET_INIT:
-          if(msg.arg1 == 1) {
-            setBtnEnable(true);
-            if(sf != null) {
-              sf.setUrl(host_ip, CAMERA_SERVER_PORT);
-              sf.start();
+        case MSG_CLIENT_SOCKET_INIT: {
+          if(msg.obj != null) {
+            if((int)msg.obj == 1) {
+              setBtnEnable(true);
+              mHandler.obtainMessage(MSG_SEND_CMD_TO_SERVER,MSG_CAM_OPEN).sendToTarget();
+              mHandler.sendMessageDelayed(mHandler.obtainMessage(MSG_RUN_CAM_SURFACE, 1), 2000);
             }
-            if(sft != null) {
-              sft.start(host_ip, CAMERA_SERVER_PORT);
-            }
-          }
-          else if(msg.arg1 == -1) {
-            setBtnEnable(false);
-            if(sf != null) {
-              sf.stop();
-            }
-            if(sft != null) {
-              sft.stop();
+            else if((int)msg.obj == -1) {
+              setBtnEnable(false);
+              mHandler.obtainMessage(MSG_SEND_CMD_TO_SERVER,MSG_CAM_CLOSE).sendToTarget();
+              mHandler.obtainMessage(MSG_RUN_CAM_SURFACE,-1).sendToTarget();
             }
           }
           else {
             new Thread() {
               @Override
               public void run() {
-                if(useUdp) {
-                 // reciverMsgFromServer();
-                  initClientSocketUdp();
-                }
-                else {
-                  initClientSocketTcp();
-                }
+                initClientSocketUdp();
               }
             }.start();
           }
-          break;
+        }
+        break;
 
-        case MSG_CONSOLE_INFO_SHOW:
+        case MSG_RUN_CAM_SURFACE: {
+          if(msg.obj != null) {
+            if((int)msg.obj == 1) {
+              sft.setHostIp(host_ip);
+              sft.start();
+            }
+            else  {
+              sft.stop();
+            }
+          }
+        }
+        break;
+
+        case MSG_CONSOLE_INFO_SHOW: {
           if(msg.obj != null) {
             console_show.setText((String)msg.obj);
           }
-          break;
+        }
+        break;
 
-        case MSG_SEND_CMD_TO_SERVER:
+        case MSG_SEND_CMD_TO_SERVER: {
           if(msg.obj != null) {
             final String cmd = (String)msg.obj;
             new Thread() {
               @Override
               public void run() {
-                if(useUdp) {
-                  sendCmdToServerUdp(cmd);
-                }
-                else {
-                  sendCmdToServerTcp(cmd);
-                }
+                sendCmdToServerUdp(cmd);
               }
             }.start();
-
-            if(msg.obj.equals(MSG_STOP) || msg.obj.equals(MSG_CAM_CLOSE)) {
-              if(sf != null)
-                sf.stop();
-            }
           }
-          break;
+        }
+        break;
       }
     }
   };
