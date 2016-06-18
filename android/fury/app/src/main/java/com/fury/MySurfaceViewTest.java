@@ -162,16 +162,15 @@ private void drawVideoSurface(boolean r) {
 			while(true) {
 				try {
 
-                    DatagramPacket recv_pkt = new DatagramPacket(frame_buf, frame_buf.length);
+					DatagramPacket recv_pkt = new DatagramPacket(frame_buf, frame_buf.length);
 					recv_socket.receive(recv_pkt);
 
 					byte[] tmp = recv_pkt.getData();
-
 					//pkg idx,number.
 					if(tmp[1] <= tmp[0]) {
 						Log.i(TAG, " pkg :"+tmp[0]+"/"+tmp[1]);
 
-                        System.arraycopy(tmp,2,show_buf,show_length,recv_pkt.getLength());
+						System.arraycopy(tmp,2,show_buf,show_length,recv_pkt.getLength());
 						show_length += recv_pkt.getLength()-2;
 
 						if(tmp[1] != tmp[0]){
@@ -180,9 +179,7 @@ private void drawVideoSurface(boolean r) {
 					}
 
 					Log.i(TAG, "show_length:"+show_length);
-					//send_socket.send(send_pkt);
-					//if(true)
-					//	continue;
+
 
 					fps++;
 					span = System.currentTimeMillis() -times;
