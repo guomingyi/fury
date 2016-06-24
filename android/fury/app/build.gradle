@@ -17,10 +17,31 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+
+    applicationVariants.all { variant ->
+        variant.outputs.each { output ->
+            String apk_name = output.outputFile.name;
+            if(output.outputFile.name.indexOf('-debug.apk') > -1){
+                output.outputFile = new File(
+                        output.outputFile.parent,
+                        output.outputFile.name.replace(apk_name, "fruy_v${defaultConfig.versionName}_${releaseTime()}_debug.apk"))
+            }else if(output.outputFile.name.indexOf('-release.apk') > -1){
+                output.outputFile = new File(
+                        output.outputFile.parent,
+                        output.outputFile.name.replace(apk_name,"fruy_v${defaultConfig.versionName}_${releaseTime()}.apk"))
+            }
+        }
+    }
+
+
 }
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     testCompile 'junit:junit:4.12'
     compile 'com.android.support:appcompat-v7:23.1.0'
+}
+
+def releaseTime() {
+    return new Date().format("yyyyMMdd")
 }

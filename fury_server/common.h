@@ -1,5 +1,5 @@
 #include <linux/input.h>
-#include <softPwm.h>
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -11,6 +11,15 @@
 #include <signal.h>
 #include <pthread.h> 
 
+#include <stdio.h>
+#include <errno.h>
+#include <string.h>
+
+#include <wiringPi.h>
+#include <softServo.h>
+#include <softPwm.h>
+
+
 //////////////////////////////////////////////////////////////////////
 #define printf(fmt, args...) do{ \
     if(1) {\
@@ -19,7 +28,7 @@
 }while(0)
 
 
-#define UBUNTU_HOST 0
+#define UBUNTU_HOST 1
 
 #if UBUNTU_HOST
 #define pinMode(...)

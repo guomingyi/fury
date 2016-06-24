@@ -24,11 +24,14 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URL;
 import java.util.Arrays;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.logging.Handler;
 import com.fury.MainActivity;
 
 public class MySurfaceViewTest extends SurfaceView implements Callback
 {
+public static final boolean dbg = false;
 private static final String TAG = "fury-MySurfaceViewTest";
 private SurfaceHolder sfh;
 private Canvas canvas;
@@ -52,7 +55,8 @@ private static final int BUF_SIZE = 512 * 1024;
 public final static int SERVER_SEND_PORT = MainActivity.CAM_SERVER_PORT;
 private final static int SERVER_RECV_PORT = MainActivity.CAM_SERVER_UDP_RECV_PORT;
 
-private String host_ip;
+private String host_ip = "192.168.43.91";
+private String host_port = "8080";
 
 public MySurfaceViewTest(Context context, AttributeSet attrs) {
     super(context, attrs);
@@ -75,12 +79,22 @@ private void initialize() {
     this.setKeepScreenOn(true);
 }
  
-public void surfaceCreated(SurfaceHolder holder) {}
-public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {}    
-public void surfaceDestroyed(SurfaceHolder holder) {}   
+public void surfaceCreated(SurfaceHolder holder) {
+	Log.i(TAG, "surfaceCreated:"+this);
+}
+public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+	Log.i(TAG, "surfaceChanged:"+this);
+}
+public void surfaceDestroyed(SurfaceHolder holder) {
+	Log.i(TAG, "surfaceDestroyed:"+this);
+}
 
 public void setHostIp(String ip){
     host_ip = ip;
+}
+public void setHost(String ip, String port){
+	host_ip = ip;
+	host_port = port;
 }
 
 public void start() {
@@ -92,7 +106,14 @@ public void start() {
 public void stop() {
 	if(!stop_flag) {
 		stop_flag = true;
+
+		if(mTimer != null) {
+			mTimer.cancel();
+			mTimer = null;
+		}
+
         drawVideoSurface(false);
+		mCount = 1;
 	}
 }
 
@@ -102,12 +123,14 @@ private void drawVideoSurface(boolean r) {
         Log.i(TAG, "drawVideoSurface stop..");
         return;
     }
-    
+
+	MySurfaceViewTest.this.setBackgroundColor(Color.TRANSPARENT);
+
 	new Thread() {
         
 		@Override
 		public void run() {
-			Log.i(TAG, "drawVideoSurface start..");
+			Log.i(TAG, "drawVideoSurface start:"+host_ip +"/"+host_port);
 
         //show fps.
 			String str_fps = "0 fps";
@@ -128,46 +151,34 @@ private void drawVideoSurface(boolean r) {
             try {
                 recv_socket = new DatagramSocket(null);
 				recv_socket.setReuseAddress(true);
-				recv_socket.bind(new InetSocketAddress(SERVER_RECV_PORT));
+				recv_socket.bind(new InetSocketAddress(Integer.parseInt(host_port) + 1));
             }
             catch (Exception e) {
-                Log.i(TAG, "e"+e.toString());
+                Log.i(TAG, "e" + e.toString());
 				e.printStackTrace();
                 return;
             }
 
-        //send msg to mjpg server,port 8080.
-            final String cmd = "1001";
-            DatagramSocket send_socket = null;
-            DatagramPacket send_pkt = null;
-        
-            try {
-                send_pkt = new DatagramPacket(cmd.getBytes(), cmd.length(),
-                    InetAddress.getByName(host_ip), SERVER_SEND_PORT);
-				send_socket = new DatagramSocket();
-				send_socket.setReuseAddress(true);
-                send_socket.send(send_pkt);
-            }
-            catch (Exception e) {
-                Log.e(TAG, "exception:" + e);
-				e.printStackTrace();
-                return;
-            }
+			scheduleSendUdp();
 
 			times = System.currentTimeMillis();
 
-			byte[] show_buf = new byte[1024*1024];
+			byte[] show_buf = new byte[512*1024];
 			int show_length = 0;
+
+			Log.i(TAG, "udp recv_socket wait..");
 
 			while(true) {
 				try {
 
 					DatagramPacket recv_pkt = new DatagramPacket(frame_buf, frame_buf.length);
 					recv_socket.receive(recv_pkt);
+					mCount = 0;
 
 					byte[] tmp = recv_pkt.getData();
 					//pkg idx,number.
 					if(tmp[1] <= tmp[0]) {
+						if(dbg)
 						Log.i(TAG, " pkg :"+tmp[0]+"/"+tmp[1]);
 
 						System.arraycopy(tmp,2,show_buf,show_length,recv_pkt.getLength());
@@ -178,8 +189,10 @@ private void drawVideoSurface(boolean r) {
 						}
 					}
 
+					if(dbg)
 					Log.i(TAG, "show_length:"+show_length);
 
+					show_length = 0;
 
 					fps++;
 					span = System.currentTimeMillis() -times;
@@ -189,33 +202,59 @@ private void drawVideoSurface(boolean r) {
 						fps = 0;
 					}
 
-					canvas = sfh.lockCanvas();
-					canvas.drawColor(Color.RED);
-
-					Bitmap bmp = BitmapFactory.decodeStream(new ByteArrayInputStream(show_buf));
+					BitmapFactory.Options opts=new BitmapFactory.Options();
+					opts.inJustDecodeBounds = false;
+					opts.inPreferredConfig = Bitmap.Config.RGB_565;
+					opts.inSampleSize = 1;
+					Bitmap bmp = BitmapFactory.decodeStream(new ByteArrayInputStream(show_buf),null,opts);
 
 					int width = mScreenWidth;
 					int height = mScreenHeight;
 
-					float rate_width = (float) mScreenWidth / (float) bmp.getWidth();
-					float rate_height = (float) mScreenHeight / (float) bmp.getHeight();
+					if(Is_Scale) {
+						float rate_width = (float) mScreenWidth / (float) bmp.getWidth();
+						float rate_height = (float) mScreenHeight / (float) bmp.getHeight();
+						if(rate_width > rate_height) width = (int)((float)bmp.getWidth()*rate_height);
+						if(rate_width < rate_height) height = (int)((float)bmp.getHeight()*rate_width);
+
+						if(dbg)
+							Log.i(TAG, "mScreen:"+mScreenWidth+"/"+mScreenHeight
+											+" rate:"+rate_width+"/"+rate_height
+											+" rate:"+rate_width+"/"+rate_height
+											+" width:"+width+"/"+width
+											+" height:"+height+"/"+height);
+					}
+
+					int x,y;
+                    x = (mScreenWidth - width) /2;
+					y = Is_Scale ? 0 : ((mScreenHeight - height) /2);
 
 					mBitmap = Bitmap.createScaledBitmap(bmp, width, height, false);
-					canvas.drawBitmap(mBitmap, (mScreenWidth - width) / 2, (mScreenHeight - height) / 2, null);
 
+					canvas = sfh.lockCanvas();
+					canvas.drawColor(Color.BLACK);
+					canvas.drawBitmap(mBitmap, x, y, null);
 					canvas.drawText(str_fps, 2, 22, pt);
 					sfh.unlockCanvasAndPost(canvas);
 
+					if(!mBitmap.isRecycled()) {
+						mBitmap.recycle();
+						System.gc();
+					}
+
 					if(!start_run) {
+						Log.i(TAG,"STOP_RUN..");
 						break;
 					}
+
+					//mCount = 1;
 					send_socket.send(send_pkt);
-					Arrays.fill(show_buf, (byte) 0);
-					show_length = 0;
+
 				}
 				catch (Exception e) {
 					e.printStackTrace();
-					break;
+					Log.i(TAG, "E:" + e.toString());
+					mCount = 1;
 				}
 			}
 
@@ -231,7 +270,7 @@ private void drawVideoSurface(boolean r) {
 				}
 				Log.i(TAG, " exit loop success!");
 			}
-			catch (Exception e){
+			catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
@@ -244,9 +283,54 @@ private android.os.Handler mHandler = new android.os.Handler() {
 	public void handleMessage(Message msg) {
 		switch (msg.what) {
 			case MSG_RECV_FROM_MJPG_SERVER: {
+
 			}
 			break;
 		}
 	}
 };
+
+private Timer mTimer = null;
+private int mCount = 0;
+
+private DatagramSocket send_socket = null;
+private DatagramPacket send_pkt = null;
+
+private void scheduleSendUdp() {
+	Log.i(TAG, "scheduleSendUdp..");
+	mCount = 1;
+
+	mTimer = new Timer();
+	mTimer.schedule(new TimerTask() {
+		@Override
+		public void run() {
+
+			if (mCount == 1) {
+				//send msg to mjpg server,port 8080.
+				try {
+					Log.i(TAG, "timer: udp send_socket to jpg server..");
+					final String cmd = "Udp req";
+					send_pkt = new DatagramPacket(cmd.getBytes(), cmd.length(),
+							InetAddress.getByName(host_ip), Integer.parseInt(host_port));
+					if (send_socket == null) {
+						send_socket = new DatagramSocket();
+						send_socket.setReuseAddress(true);
+					}
+					send_socket.send(send_pkt);
+				}
+				catch (Exception e) {
+					Log.e(TAG, "exception:" + e);
+					e.printStackTrace();
+				}
+			}
+			else {
+				Log.i(TAG, "timer run empty loop...." );
+			}
+		}
+	}, 0, 1000);
+
+}
+
+
+
 }    

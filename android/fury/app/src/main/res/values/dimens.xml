@@ -6,6 +6,14 @@
     <dimen name="btn_height">60dp</dimen>
     <dimen name="btn_width">100dp</dimen>
 
-    <dimen name="video_height">350dp</dimen>
+    <dimen name="btn_width_full_screen">50dp</dimen>
+    <dimen name="btn_height_full_screen">50dp</dimen>
+
+    <dimen name="btn_h_gap">60dp</dimen>
+    <dimen name="btn_w_gap">0dp</dimen>
+
+
+
+    <dimen name="video_height">250dp</dimen>
 
 </resources>

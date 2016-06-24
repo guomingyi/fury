@@ -59,17 +59,17 @@ static void *work_main_thread(void *args)
 	while(1) 
 	{
 		double tmp = getCpuTmp();
-                if(tmp >= 42) {
-                    play_mini_fan(((int)tmp >= 42) ? 1 : 0);
-		    sleep(180);
-                }
+		if(tmp >= 42) {
+			play_mini_fan(((int)tmp >= 42) ? 1 : 0);
+			sleep(180);
+		}
 		else {
-		    sleep(5);
+			sleep(5);
 		}
 	}
 
-    pthread_exit(NULL);   
-    return NULL;
+	pthread_exit(NULL);   
+	return NULL;
 }
 
 void *server_socket_thread(void *args)

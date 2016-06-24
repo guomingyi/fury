@@ -16,9 +16,15 @@ import android.graphics.PixelFormat;
 import android.util.Log;
 import android.view.Gravity;
 
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.util.Arrays;
+
 
 public class ControlService extends Service {
-    private static final String TAG = "chariot-ControlService";
+    private static final String TAG = "fury-ControlService";
     private Handler mHandler;
     private Context mContext;
 
@@ -26,7 +32,9 @@ public class ControlService extends Service {
     private WindowManager mWindowManager;
     private WindowManager.LayoutParams mLayout;
 
-
+    private DatagramSocket send_socket = null;
+    private DatagramPacket send_pkt = null;
+    private String host_ip, tank_server_port,jpg_server_port;
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -38,21 +46,8 @@ public class ControlService extends Service {
         super.onCreate();
         Log.d(TAG, "----onCreate----");
         mContext = this;
-        //createFloatWindow();
 
-    }
 
-    public void createFloatWindow() {
-        mView = new FloatWindowView(this);
-        WindowManager mWindowManager = (WindowManager) getApplicationContext().getSystemService("window");
-        mLayout = new WindowManager.LayoutParams();
-        mLayout.type = WindowManager.LayoutParams.TYPE_SYSTEM_ALERT;
-        mLayout.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
-        mLayout.format = PixelFormat.RGBA_8888;
-        mLayout.gravity = Gravity.TOP | Gravity.LEFT;
-        mLayout.width = WindowManager.LayoutParams.WRAP_CONTENT;
-        mLayout.height = WindowManager.LayoutParams.WRAP_CONTENT;
-        mWindowManager.addView(mView,mLayout);
     }
 
     @Override
@@ -76,7 +71,75 @@ public class ControlService extends Service {
 
     public void setHandler(Handler h) {
         mHandler = h;
-        Log.d(TAG, "setHandler:"+h);
+        Log.d(TAG, "setHandler:" + h);
+    }
+
+    public void setHostInfo(String ip, String tank_port, String jpg_port) {
+        host_ip = ip;
+        tank_server_port = tank_port;
+        jpg_server_port = jpg_port;
+    }
+
+    public void udpSendMsgToTankServer(final String cmd) {
+        new Thread(new Runnable() {
+
+            @Override
+            public void run() {
+                try {
+                    Log.i(TAG, "udpSendMsgToServer: " + cmd);
+                    send_pkt = new DatagramPacket(cmd.getBytes(), cmd.length(),
+                            InetAddress.getByName(host_ip), Integer.parseInt(tank_server_port));
+                    if(send_socket == null) {
+                        send_socket = new DatagramSocket();
+                        send_socket.setReuseAddress(true);
+                    }
+                    send_socket.send(send_pkt);
+                }
+                catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
+    }
+
+    public void udpRecivFromServer(final int msgId) {
+
+        new Thread(new Runnable() {
+
+            @Override
+            public void run() {
+                DatagramSocket socket = null;
+
+                try {
+                    Log.i(TAG, "new socket..");
+                    socket = new DatagramSocket(null);
+                    socket.setReuseAddress(true);
+                    socket.bind(new InetSocketAddress(Integer.parseInt(tank_server_port)+1));
+                }
+                catch (Exception e) {
+                    e.printStackTrace();
+                    Log.i(TAG, "udpRecivFromServer:"+e.toString());
+                    return;
+                }
+
+                while(true) {
+                    try {
+                        Log.i(TAG, "waiting server reply...");
+
+                        byte[] buf = new byte[10];
+                        DatagramPacket packet = new DatagramPacket(buf, buf.length);
+                        socket.receive(packet);
+                        String recv = new String(packet.getData());
+                        Log.i(TAG, "Reciv:" + recv + "  " + packet.getLength());
+                        mHandler.obtainMessage(msgId,recv);
+                    }
+                    catch (Exception e) {
+                        socket.close();
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }).start();
     }
 
 }

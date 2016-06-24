@@ -1,5 +1,5 @@
 <resources>
-    <string name="host_ip">192.168.42.28</string>
+    <string name="host_ip">192.168.42.182</string>
     <string name="host_port">9090</string>
     <string name="cam_host_port">8080</string>
 
@@ -16,10 +16,10 @@
     <string name="str_speed_dec">速度--</string>
     <string name="str_speed_inc">速度++</string>
 
-    <string name="str_up">前进</string>
-    <string name="str_down">后退</string>
-    <string name="str_left">左转</string>
-    <string name="str_right">右转</string>
+    <string name="str_up">前</string>
+    <string name="str_down">后</string>
+    <string name="str_left">左</string>
+    <string name="str_right">右</string>
     <string name="str_mid">Led</string>
     
     <string name="str_host_ip">主机：</string>
@@ -28,5 +28,7 @@
     <string name="console_default">终端输出：</string>
     
     <string name="video_notic">实时Video显示</string>
+    <string name="full_screen">Video全屏</string>
+
 
 </resources>

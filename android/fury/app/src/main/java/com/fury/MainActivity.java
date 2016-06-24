@@ -15,11 +15,14 @@ import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
+import android.preference.Preference;
+import android.preference.PreferenceManager;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -30,6 +33,7 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.TextView.OnEditorActionListener;
@@ -89,32 +93,32 @@ public class MainActivity extends Activity implements  View.OnTouchListener {
   private final static int MSG_CAMERA_CLOSE = 2004;
 
 
-  private final static String BTN_LED = String.valueOf(MSG_LED_OPEN);
+  public final static String BTN_LED = String.valueOf(MSG_LED_OPEN);
 
-  private final static String BTN_SPEED_DEC = String.valueOf(MSG_TANK_SPEED_DEC);
-  private final static String BTN_SPEED_INC = String.valueOf(MSG_TANK_SPEED_INC);
+  public final static String BTN_SPEED_DEC = String.valueOf(MSG_TANK_SPEED_DEC);
+  public final static String BTN_SPEED_INC = String.valueOf(MSG_TANK_SPEED_INC);
 
-  private final static String BTN_UP_DOWN = String.valueOf(MSG_TANK_GO_FORWARD);
-  private final static String BTN_UP_UP = String.valueOf(MSG_TANK_STOP_RUN);
+  public final static String BTN_UP_DOWN = String.valueOf(MSG_TANK_GO_FORWARD);
+  public final static String BTN_UP_UP = String.valueOf(MSG_TANK_STOP_RUN);
 
-  private final static String BTN_DOWN_DOWN = String.valueOf(MSG_TANK_GO_BACK);
-  private final static String BTN_DOWN_UP = String.valueOf(MSG_TANK_STOP_RUN);
+  public final static String BTN_DOWN_DOWN = String.valueOf(MSG_TANK_GO_BACK);
+  public final static String BTN_DOWN_UP = String.valueOf(MSG_TANK_STOP_RUN);
 
-  private final static String BTN_LEFT_DOWN = String.valueOf(MSG_TANK_GO_LEFT);
-  private final static String BTN_LEFT_UP = String.valueOf(MSG_TANK_STOP_RUN);
+  public final static String BTN_LEFT_DOWN = String.valueOf(MSG_TANK_GO_LEFT);
+  public final static String BTN_LEFT_UP = String.valueOf(MSG_TANK_STOP_RUN);
 
-  private final static String BTN_RIGHT_DOWN = String.valueOf(MSG_TANK_GO_RIGHT);
-  private final static String BTN_RIGHT_UP = String.valueOf(MSG_TANK_STOP_RUN);
+  public final static String BTN_RIGHT_DOWN = String.valueOf(MSG_TANK_GO_RIGHT);
+  public final static String BTN_RIGHT_UP = String.valueOf(MSG_TANK_STOP_RUN);
 
 
-  private final static String MSG_STOP = String.valueOf(MSG_SYS_SLEEP);
-  private final static String MSG_CAM_OPEN = String.valueOf(MSG_CAMERA_OPEN);
-  private final static String MSG_CAM_CLOSE = String.valueOf(MSG_CAMERA_CLOSE);
-  private final static String MSG_FAN = String.valueOf(MSG_FAN_OPEN);
-  private final static String MSG_BEEP = String.valueOf(MSG_BEEP_PLAY);
+  public final static String MSG_STOP = String.valueOf(MSG_SYS_SLEEP);
+  public final static String MSG_CAM_OPEN = String.valueOf(MSG_CAMERA_OPEN);
+  public final static String MSG_CAM_CLOSE = String.valueOf(MSG_CAMERA_CLOSE);
+  public final static String MSG_FAN = String.valueOf(MSG_FAN_OPEN);
+  public final static String MSG_BEEP = String.valueOf(MSG_BEEP_PLAY);
 //协议
   
-  private Button btnConnect;
+  private Button btnConnect,btnVideoFullScreen;
   private Button btnSend;
   private EditText editSend;
   private Socket socket;
@@ -139,18 +143,10 @@ public class MainActivity extends Activity implements  View.OnTouchListener {
   private ControlService mControlService;
 
   private RelativeLayout console_layout, host_layout;
+  private LinearLayout video_area_layout;
 
-
-  public void toastText(String message)
-  {
-    Toast.makeText(this, message, Toast.LENGTH_LONG).show();
-  }
-
-  public void handleException(Exception e, String prefix)
-  {
-    e.printStackTrace();
-    toastText(prefix + e.toString());
-  }
+  private  SharedPreferences sp;
+  private SharedPreferences.Editor mEditor;
 
   /** Called when the activity is first created. */
   @Override
@@ -164,24 +160,51 @@ public class MainActivity extends Activity implements  View.OnTouchListener {
       setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
     }
 
-    getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
-            WindowManager.LayoutParams.FLAG_FULLSCREEN);
+    //getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+    //        WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
-    host_ip = getResources().getString(R.string.host_ip);
-    host_port = getResources().getString(R.string.host_port);
-    final String port = getResources().getString(R.string.cam_host_port);
+    sp = PreferenceManager.getDefaultSharedPreferences(this);
+    mEditor = sp.edit();
+
+    host_ip = sp.getString("host_ip", null);
+    host_port = sp.getString("host_port", null);
+    String port = sp.getString("cam_server_port", null);
     if(port != null) {
       CAM_SERVER_PORT = Integer.parseInt(port);
-      CAM_SERVER_UDP_RECV_PORT = CAM_SERVER_PORT+1;
+      CAM_SERVER_UDP_RECV_PORT = CAM_SERVER_PORT +1;
     }
 
-    setContentView(R.layout.main);
+    Log.i(TAG,"host_ip:"+host_ip
+            +" host_port:"+host_port
+            +" port:"+port);
+
+
+    if(host_ip == null || host_port == null || port == null) {
+      host_ip = getResources().getString(R.string.host_ip);
+      host_port = getResources().getString(R.string.host_port);
+      port = getResources().getString(R.string.cam_host_port);
+      CAM_SERVER_PORT = Integer.parseInt(port);
+      mEditor.putString("cam_server_port", port);
+      mEditor.putString("host_ip", host_ip);
+      mEditor.putString("host_port", host_port);
+      mEditor.commit();
+    }
+
+    //setContentView(R.layout.main);
+    setContentView(R.layout.main_new);
     initView();
 
     Intent intent = new Intent();
-    intent.setClassName(getPackageName(),"com.chariot.ControlService");
+    intent.setClassName(getPackageName(), "com.fury.ControlService");
     startService(intent);
     bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+
+
+    //test
+    Intent i = new Intent();
+    i.setClassName(this.getPackageName(), "com.fury.FullScreenActivity");
+   // startActivity(i);
+
   }
 
   public void onStart() {
@@ -209,6 +232,8 @@ public class MainActivity extends Activity implements  View.OnTouchListener {
     Log.i(TAG,"initView:");
 
     btnConnect = (Button)findViewById(R.id.btnConnect);
+    btnVideoFullScreen = (Button)findViewById(R.id.btnVideoFullScreen);
+
 
     btn_up = (Button)findViewById(R.id.btn_up);
     btn_down = (Button)findViewById(R.id.btn_down);
@@ -238,6 +263,8 @@ public class MainActivity extends Activity implements  View.OnTouchListener {
           host_ip = (String) host_ip_view.getHint();
         }
         Log.i(TAG, "host_ip:" + host_ip);
+        mEditor.putString("host_ip", host_ip);
+        mEditor.commit();
       }
     });
     
@@ -259,10 +286,13 @@ public class MainActivity extends Activity implements  View.OnTouchListener {
           host_port = (String) host_port_view.getHint();
         }
         Log.i(TAG, "host_port:" + host_port);
+        mEditor.putString("host_port", host_port);
+        mEditor.commit();
       }
     });
 
     btnConnect.setOnTouchListener(this);
+    btnVideoFullScreen.setOnTouchListener(this);
     btn_mid.setOnTouchListener(this);
     btn_speed_dec.setOnTouchListener(this);
     btn_speed_inc.setOnTouchListener(this);
@@ -271,18 +301,19 @@ public class MainActivity extends Activity implements  View.OnTouchListener {
     btn_left.setOnTouchListener(this);
     btn_right.setOnTouchListener(this);
 
-    console_layout = (RelativeLayout)findViewById(R.id.console_layout);
+    video_area_layout = (LinearLayout)findViewById(R.id.video_area_layout);
     host_layout = (RelativeLayout)findViewById(R.id.host_layout);
 
     if(!UdpJpgTest) {
       sf = (MySurfaceView)findViewById(R.id.mySurfaceViewVideo);
       sf.setUrl(host_ip, CAM_SERVER_PORT);
-      sf.setVisibility(View.VISIBLE);
+      //sf.setVisibility(View.VISIBLE);
     }
     else {
       sft = (MySurfaceViewTest)findViewById(R.id.mySurfaceViewVideoTest);
       sft.setHostIp(host_ip);
       sft.setVisibility(View.VISIBLE);
+      video_area_layout.setVisibility(View.VISIBLE);
     }
 
     setBtnEnable(false);
@@ -550,7 +581,12 @@ private void reciverMsgFromServer() {
         case MSG_RUN_CAM_SURFACE: {
           if(msg.obj != null) {
             if((int)msg.obj == 1) {
-              sft.setHostIp(host_ip);
+              //sft.setHostIp(host_ip);
+              //sft.start();
+
+              video_area_layout.setVisibility(View.VISIBLE);
+              sft.setVisibility(View.VISIBLE);
+              sft.Is_Scale = true;
               sft.start();
             }
             else  {
@@ -584,8 +620,28 @@ private void reciverMsgFromServer() {
   };
 
 
+  public void onPause() {
+    super.onPause();
+    Log.i(TAG, "onPause:");
+
+    sft.stop();
+    sft.setVisibility(View.GONE);
+    video_area_layout.setVisibility(View.GONE);
+
+  }
+
+  public void onResume() {
+    super.onResume();
+    Log.i(TAG, "onResume:");
+    video_area_layout.setVisibility(View.VISIBLE);
+    sft.setVisibility(View.VISIBLE);
+    sft.Is_Scale = true;
+    sft.start();
+  }
   public void onDestroy() {
     super.onDestroy();
+    Log.i(TAG, "onDestroy:");
+    sft.stop();
     closeSocket();
   }
 
@@ -649,7 +705,15 @@ private void reciverMsgFromServer() {
 	    		mHandler.obtainMessage(MSG_CLIENT_SOCKET_INIT).sendToTarget();
 	    	}
 	    break;
-	         
+      case R.id.btnVideoFullScreen:
+        if(action == MotionEvent.ACTION_UP) {
+          Intent i = new Intent();
+          i.setClassName(this.getPackageName(),"com.fury.FullScreenActivity");
+          startActivity(i);
+          finish();
+        }
+        break;
+
 	    case R.id.btn_speed_inc:
 	    	if(action == MotionEvent.ACTION_DOWN) {
 				mHandler.obtainMessage(MSG_SEND_CMD_TO_SERVER,BTN_SPEED_INC).sendToTarget();
@@ -694,6 +758,15 @@ private void reciverMsgFromServer() {
     Log.i(TAG," onKeyDown:"+keyCode);
 
     if(keyCode == KeyEvent.KEYCODE_BACK) {
+
+    }
+    return true;
+  }
+
+  public boolean onKeyUp(int keyCode, KeyEvent event) {
+    Log.i(TAG," onKeyUp:"+keyCode);
+
+    if(keyCode == KeyEvent.KEYCODE_BACK) {
       mHandler.obtainMessage(MSG_SEND_CMD_TO_SERVER, MSG_STOP).sendToTarget();
       if(sf != null) {
         sf.stop();
@@ -701,14 +774,9 @@ private void reciverMsgFromServer() {
       if(sft != null) {
         sft.stop();
       }
+      finish();
     }
-    return super.onKeyDown(keyCode, event);
-  }
-
-  public boolean onKeyUp(int keyCode, KeyEvent event) {
-    Log.i(TAG," onKeyUp:"+keyCode);
-
-    return super.onKeyUp(keyCode, event);
+    return true;
   }
   
 }

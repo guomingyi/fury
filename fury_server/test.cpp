@@ -11,6 +11,9 @@
 
 #include "common.h"
 
+
+
+
 #undef BUFFER_SIZE
 #define BUFFER_SIZE 65000 
 
@@ -153,6 +156,47 @@ int test_socket_init(void)
 	#define buf_size (8194)
 	char send_buf[buf_size+1] = {0};
 	int i,j = 0;
+
+
+#if 1
+{
+  wiringPiSetup ();
+
+
+  softServoSetup (0, 1, 2, 3, 4, 5, 6, 7) ;
+
+  softServoWrite (0,  0) ;
+/*
+  softServoWrite (1, 1000) ;
+  softServoWrite (2, 1100) ;
+  softServoWrite (3, 1200) ;
+  softServoWrite (4, 1300) ;
+  softServoWrite (5, 1400) ;
+  softServoWrite (6, 1500) ;
+  softServoWrite (7, 2200) ;
+*/
+
+  for (;;)
+    delay (10) ;
+
+
+
+
+}
+
+
+
+#endif
+
+
+
+
+
+
+
+
+
+
 
 
 	for(i = 0; i < buf_size; i++) {
