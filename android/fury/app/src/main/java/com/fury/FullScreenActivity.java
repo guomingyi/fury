@@ -63,6 +63,8 @@ public class FullScreenActivity extends Activity implements  View.OnTouchListene
     private String cam_server_port;
     private ControlService mControlService;
 
+    private VirtualJoystick mVirtualJoystick;
+
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState)

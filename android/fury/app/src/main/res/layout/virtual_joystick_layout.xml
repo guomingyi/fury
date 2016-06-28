@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/move_layout"
+    android:layout_width="130dp"
+    android:layout_height="130dp"
+    android:background="@mipmap/scrubber_control_pressed_holo"
+    android:layout_centerVertical="true"
+    android:layout_centerHorizontal="true">
+
+
+    <ImageButton
+        android:id="@+id/move_button"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:layout_centerVertical="true"
+        android:layout_centerHorizontal="true"
+        android:background="@drawable/view_select_bg"
+        />
+
+
+</RelativeLayout>
