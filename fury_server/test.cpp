@@ -65,7 +65,7 @@ static void signalHandler(int sig) {
 
 
 #if 1
-char *udpFileName = "/home/android/pi/udpFile.jpg";
+char *udpFileName = (char *)"/home/android/pi/udpFile.jpg";
 int writeToFile(char *frame, int frame_size) {
 int fd;
 
@@ -101,7 +101,7 @@ static int sendToRemoteServer(struct sockaddr_in *client, char *frame, int len) 
     client->sin_port = htons(9091);
 
 
-	int i,j = 0;
+	int i;
 	int mj = len % PKG_BUF_SIZE;
 	int n = (len / PKG_BUF_SIZE + (mj > 0 ? 1 : 0));
 	
@@ -141,6 +141,41 @@ static int sendToRemoteServer(struct sockaddr_in *client, char *frame, int len) 
 }
 
 
+int writeServo(int pin, int duty) 
+{
+#define MAX_BUFFER_SIZE 20
+#define DEVFILE	"/dev/servoblaster"
+
+
+int ret;
+int fd;
+int len;
+char buf[MAX_BUFFER_SIZE];
+
+memset(buf, 0, MAX_BUFFER_SIZE);
+
+// echo 0=150 > /dev/servoblaster
+len = sprintf(buf,"%d=%d",pin, duty);  
+
+printf("len:%d\n", len);
+printf("echo %s >%s \n", buf, DEVFILE);
+
+fd = open(DEVFILE, O_WRONLY);
+if(fd < 0) {
+	printf("---open %s err!---\n", DEVFILE);
+	return -1;
+}
+
+if((ret = write(fd, buf, len)) < 0) {
+	printf("---write :%s fail---\n", buf);
+}
+
+close(fd);
+
+return 0;
+
+}
+
 char recv_buf[BUFFER_SIZE] = {0};
 char reply_buf[BUFFER_SIZE] = {0};
 int test_socket_init(void)
@@ -160,28 +195,14 @@ int test_socket_init(void)
 
 #if 1
 {
-  wiringPiSetup ();
 
 
-  softServoSetup (0, 1, 2, 3, 4, 5, 6, 7) ;
+writeServo(4, 90);
 
-  softServoWrite (0,  0) ;
-/*
-  softServoWrite (1, 1000) ;
-  softServoWrite (2, 1100) ;
-  softServoWrite (3, 1200) ;
-  softServoWrite (4, 1300) ;
-  softServoWrite (5, 1400) ;
-  softServoWrite (6, 1500) ;
-  softServoWrite (7, 2200) ;
-*/
+
 
   for (;;)
     delay (10) ;
-
-
-
-
 }
 
 

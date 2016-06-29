@@ -27,10 +27,13 @@ public class Utils {
     public final static int MSG_TANK_SPEED_DEC = 1111;
     public final static int MSG_GET_SPEED_VALUE = 1112;
 
-    public final static int MSG_SERVO_GO_FORWARD = 1200;
-    public final static int MSG_SERVO_GO_BACK = 1201;
+    public final static int MSG_SERVO_GO_UP = 1200;
+    public final static int MSG_SERVO_GO_DOWN = 1201;
     public final static int MSG_SERVO_GO_LEFT = 1202;
     public final static int MSG_SERVO_GO_RIGHT = 1203;
+    public final static int MSG_SERVO_STOP_RUN = 1204;
+
+
 
     public final static int MSG_SYS_SLEEP = 2000;
     public final static int MSG_SYS_SHUT_DOWN = 2001;

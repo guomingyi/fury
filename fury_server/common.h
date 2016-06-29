@@ -10,6 +10,7 @@
 #include <string.h>
 #include <signal.h>
 #include <pthread.h> 
+#include <fcntl.h>
 
 #include <stdio.h>
 #include <errno.h>
@@ -75,60 +76,77 @@
 ///////////////////////////////////////////////////////////////////////
 //协议
 /*
-private final static int CMD_LENGTH = 4;
 
-private final static int MSG_TANK_STOP_RUN =  1099;
-private final static int MSG_TANK_GO_FORWARD =  1100;
-private final static int MSG_TANK_GO_BACK =  1101;
-private final static int MSG_TANK_GO_LEFT =  1102;
-private final static int MSG_TANK_GO_RIGHT =  1103;
+public final static int CMD_LENGTH = 4;
 
-private final static int MSG_LED_OPEN =  1104;
-private final static int MSG_LED_CLOSE =  1105;
+public final static int MSG_TANK_STOP_RUN = 1099;
+public final static int MSG_TANK_GO_FORWARD = 1100;
+public final static int MSG_TANK_GO_BACK = 1101;
+public final static int MSG_TANK_GO_LEFT = 1102;
+public final static int MSG_TANK_GO_RIGHT = 1103;
 
-private final static int MSG_FAN_OPEN =  1106;
-private final static int MSG_FAN_CLOSE =  1107;
+public final static int MSG_LED_OPEN = 1104;
+public final static int MSG_LED_CLOSE = 1105;
 
-private final static int MSG_BEEP_PLAY =  1108;
-private final static int MSG_BEEP_PLAY_REPEED =  1109;
+public final static int MSG_FAN_OPEN = 1106;
+public final static int MSG_FAN_CLOSE = 1107;
 
-private final static int MSG_TANK_SPEED_INC =  1110;
-private final static int MSG_TANK_SPEED_DEC =  1111;
-private final static int MSG_GET_SPEED_VALUE =  1112;
+public final static int MSG_BEEP_PLAY = 1108;
+public final static int MSG_BEEP_PLAY_REPEED = 1109;
 
-private final static int MSG_SYS_SLEEP = 2000;
-private final static int MSG_SYS_SHUT_DOWN =  2001;
-private final static int MSG_SYS_REBOOT =  2002;
-private final static int MSG_CAMERA_OPEN =  2003;
-private final static int MSG_CAMERA_CLOSE =  2004;
+public final static int MSG_TANK_SPEED_INC = 1110;
+public final static int MSG_TANK_SPEED_DEC = 1111;
+public final static int MSG_GET_SPEED_VALUE = 1112;
+
+public final static int MSG_SERVO_GO_UP = 1200;
+public final static int MSG_SERVO_GO_DOWN = 1201;
+public final static int MSG_SERVO_GO_LEFT = 1202;
+public final static int MSG_SERVO_GO_RIGHT = 1203;
+public final static int MSG_SERVO_STOP_RUN = 1204;
+
+public final static int MSG_SYS_SLEEP = 2000;
+public final static int MSG_SYS_SHUT_DOWN = 2001;
+public final static int MSG_SYS_REBOOT = 2002;
+public final static int MSG_CAMERA_OPEN = 2003;
+public final static int MSG_CAMERA_CLOSE = 2004;
+
 */
 
 #define CMD_LENGTH 4
 
+// TANK.
 #define MSG_TANK_STOP_RUN  1099
 #define MSG_TANK_GO_FORWARD  1100
 #define MSG_TANK_GO_BACK  1101
 #define MSG_TANK_GO_LEFT  1102
 #define MSG_TANK_GO_RIGHT  1103
-
-#define MSG_LED_OPEN  1104
-#define MSG_LED_CLOSE  1105
-
-#define MSG_FAN_OPEN  1106
-#define MSG_FAN_CLOSE  1107
-
-#define MSG_BEEP_PLAY  1108
-#define MSG_BEEP_PLAY_REPEED  1109
-
 #define MSG_TANK_SPEED_INC  1110
 #define MSG_TANK_SPEED_DEC  1111
 #define MSG_GET_SPEED_VALUE  1112
 
+// LED,FAN,BEEP.
+#define MSG_LED_OPEN  1104
+#define MSG_LED_CLOSE  1105
+#define MSG_FAN_OPEN  1106
+#define MSG_FAN_CLOSE  1107
+#define MSG_BEEP_PLAY  1108
+#define MSG_BEEP_PLAY_REPEED  1109
+
+
+// SERVO.
+#define MSG_SERVO_GO_UP  1200
+#define MSG_SERVO_GO_DOWN  1201
+#define MSG_SERVO_GO_LEFT  1202
+#define MSG_SERVO_GO_RIGHT  1203
+#define MSG_SERVO_STOP_RUN  1204
+
+//SYS.
 #define MSG_SYS_SLEEP  2000
 #define MSG_SYS_SHUT_DOWN  2001
 #define MSG_SYS_REBOOT  2002
 #define MSG_CAMERA_OPEN  2003
 #define MSG_CAMERA_CLOSE  2004
+
 
 //协议
 //////////////////////////////////////////////////////////////////////
@@ -162,6 +180,8 @@ void myInterrupt3(void);
 void tank_run_logic(int d);
 int tank_gpio_init(void);
 void play_beep(int n);
+int servo_run_logic(int cmd);
+int write_to_servo(int pin, int duty) ;
 
 
 

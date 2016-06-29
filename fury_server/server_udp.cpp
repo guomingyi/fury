@@ -64,7 +64,7 @@ static void signalHandler(int sig) {
         send_socket_fd = 0;
     }
 	
-	int pid, status;
+	int status;
 	waitpid(0, &status, WNOHANG);
 	
     exit(0);
@@ -77,7 +77,6 @@ int server_socket_init(void)
     
     int port = DEFAULT_PORT;
     char recv_buf[BUFFER_SIZE] = {0};
-    char reply_buf[BUFFER_SIZE] = {0};
     int on = 1;
     
     //reigster ctrl+c ,ctrl+z signal.

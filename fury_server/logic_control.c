@@ -23,6 +23,10 @@ int pwmValue = 0;
 
 int curr_cmd = 1; //default 
 
+int servo_v = 90;
+int servo_l = 90;
+
+
 void tank_run_logic(int d) 
 {
     if(gpio_init_flag == 0) {
@@ -336,7 +340,6 @@ int parse_event(input_event *e, char *str)
 
 int do_action(char *cmd)
 {
-    int evt_up = 0;
     int tmp = atoi(cmd);
 
 	printf("do_action cmd:%d\n", tmp);
@@ -392,6 +395,27 @@ int do_action(char *cmd)
         	stop_camera();
         	break;
 
+        case MSG_SERVO_GO_UP:
+        	servo_run_logic(1);
+        	break;
+
+        case MSG_SERVO_GO_DOWN:
+        	servo_run_logic(2);
+        	break;
+
+        case MSG_SERVO_GO_LEFT:
+        	servo_run_logic(3);
+        	break;
+
+        case MSG_SERVO_GO_RIGHT:
+        	servo_run_logic(4);
+        	break;
+
+        case MSG_SERVO_STOP_RUN:
+        	servo_run_logic(5);
+        	break;
+
+
         default:
         	break;
     }
@@ -402,8 +426,9 @@ int do_action(char *cmd)
 int do_action(int cmd) {
     char buf[CMD_LENGTH+1] = {0};
     if(sprintf(buf,"%d",cmd) > 0) {
-    	do_action(buf);
+    	return do_action(buf);
     }
+	return -1;
 }
 
 
@@ -486,4 +511,80 @@ void stop_camera(void) {
         camera_work_flag = 0;
     //}
 }
+
+int servo_run_logic(int cmd) {
+	if(cmd == 1) { //up
+	    servo_v += 10;
+		if(servo_v >= 250) {
+			servo_v = 250;
+		}
+		write_to_servo(6,servo_v);
+	}
+	else
+	if(cmd == 2) { //down
+	    servo_v -= 10;
+		if(servo_v <= 50) {
+			servo_v = 50;
+		}
+		write_to_servo(6,servo_v);
+	}
+	else
+	if(cmd == 3) { //left
+	    servo_l += 10;
+		if(servo_l >= 250) {
+			servo_l = 250;
+		}
+		write_to_servo(5,servo_l);
+	}
+	else
+	if(cmd == 4) { //right
+	    servo_l -= 10;
+		if(servo_l <= 50) {
+			servo_l = 50;
+		}
+		write_to_servo(5,servo_l);
+	}
+	else
+	if(cmd == 5) {
+		//servo_v = servo_l = 90;
+		//write_to_servo(6,servo_v);
+		//write_to_servo(5,servo_l);
+	}
+
+	return 0;
+}
+
+
+
+int write_to_servo(int pin, int duty) {
+    #define MAX_BUFFER_SIZE 20
+    #define DEVFILE	"/dev/servoblaster"
+
+	int ret;
+	int fd;
+	int len;
+	char buf[MAX_BUFFER_SIZE];
+
+	memset(buf, 0, MAX_BUFFER_SIZE);
+
+	// echo 0=150 > /dev/servoblaster
+	len = sprintf(buf,"%d=%d",pin, duty);  
+
+	printf("len:%d\n", len);
+	printf("echo %s >%s \n", buf, DEVFILE);
+
+	fd = open(DEVFILE, O_WRONLY);
+	if(fd < 0) {
+		printf("---open %s err!---\n", DEVFILE);
+		return -1;
+	}
+
+	if((ret = write(fd, buf, len)) < 0) {
+		printf("---write :%s fail---\n", buf);
+	}
+
+	close(fd);
+	return 0;
+}
+
 

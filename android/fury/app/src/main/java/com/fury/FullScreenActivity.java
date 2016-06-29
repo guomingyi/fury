@@ -47,7 +47,7 @@ import com.fury.MySurfaceViewTest;
 
 
 
-public class FullScreenActivity extends Activity implements  View.OnTouchListener {
+public class FullScreenActivity extends Activity implements  View.OnTouchListener, VirtualJoystick.OnMoveListerner {
     public static final String TAG = "fury-FullScreenActivity";
     public static final int MSG_RECV_FROM_MJPG_SERVER = 11;
 
@@ -63,7 +63,7 @@ public class FullScreenActivity extends Activity implements  View.OnTouchListene
     private String cam_server_port;
     private ControlService mControlService;
 
-    private VirtualJoystick mVirtualJoystick;
+    private VirtualJoystick tank_virtualJoystick, servo_virtualJoystick;
 
     /** Called when the activity is first created. */
     @Override
@@ -160,12 +160,29 @@ public class FullScreenActivity extends Activity implements  View.OnTouchListene
         btn_back_cam.setOnTouchListener(this);
 
 
+        tank_virtualJoystick = (VirtualJoystick)findViewById(R.id.tank_virtualJoystick);
+        servo_virtualJoystick = (VirtualJoystick)findViewById(R.id.servo_virtualJoystick);
+        tank_virtualJoystick.setOnMoveListerner(this);
+        servo_virtualJoystick.setOnMoveListerner(this);
+
+
         mMySurfaceViewTest = (MySurfaceViewTest)findViewById(R.id.mySurfaceViewVideoFullScreen);
         mMySurfaceViewTest.setOnTouchListener(this);
         mMySurfaceViewTest.setVisibility(View.VISIBLE);
         mMySurfaceViewTest.setHost(host_ip, cam_server_port);
         mMySurfaceViewTest.start();
 
+    }
+
+    void showJs(boolean b) {
+        if(tank_virtualJoystick.getVisibility() != View.VISIBLE) {
+            tank_virtualJoystick.setVisibility(View.VISIBLE);
+            servo_virtualJoystick.setVisibility(View.VISIBLE);
+        }
+        else {
+            tank_virtualJoystick.setVisibility(View.GONE);
+            servo_virtualJoystick.setVisibility(View.GONE);
+        }
     }
 
     @SuppressLint("HandlerLeak")
@@ -192,7 +209,8 @@ public class FullScreenActivity extends Activity implements  View.OnTouchListene
 
             case R.id.mySurfaceViewVideoFullScreen: {
                 if(action == MotionEvent.ACTION_DOWN) {
-
+                    Log.i(TAG, "onTouch:"+v);
+                    showJs(true);
                 }
                 else {
 
@@ -246,7 +264,7 @@ public class FullScreenActivity extends Activity implements  View.OnTouchListene
             case R.id.btn_forward_cam: {
                 if(action == MotionEvent.ACTION_DOWN) {
                     mControlService.udpSendMsgToTankServer(
-                            Utils.parseCmd(Utils.MSG_SERVO_GO_FORWARD));
+                            Utils.parseCmd(Utils.MSG_SERVO_GO_UP));
                 }
                 else {
 
@@ -255,7 +273,7 @@ public class FullScreenActivity extends Activity implements  View.OnTouchListene
             case R.id.btn_back_cam: {
                 if(action == MotionEvent.ACTION_DOWN) {
                     mControlService.udpSendMsgToTankServer(
-                            Utils.parseCmd(Utils.MSG_SERVO_GO_BACK));
+                            Utils.parseCmd(Utils.MSG_SERVO_GO_DOWN));
                 }
                 else {
 
@@ -298,7 +316,15 @@ public class FullScreenActivity extends Activity implements  View.OnTouchListene
 
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         Log.i(TAG," onKeyDown:"+keyCode);
-
+        if(keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) {
+            mControlService.udpSendMsgToTankServer(
+                    Utils.parseCmd(Utils.MSG_TANK_SPEED_DEC));
+        }
+        else
+        if(keyCode == KeyEvent.KEYCODE_VOLUME_UP) {
+            mControlService.udpSendMsgToTankServer(
+                    Utils.parseCmd(Utils.MSG_TANK_SPEED_INC));
+        }
         return true;
     }
 
@@ -318,6 +344,59 @@ public class FullScreenActivity extends Activity implements  View.OnTouchListene
         return true;
     }
 
+    public boolean onMove(View v, int event) {
+        Log.i(TAG,"js onMove:"+v+" event:"+event);
 
+        if(v.getId() == R.id.tank_virtualJoystick) {
+            switch (event) {
+                case VirtualJoystick.MOVE_TOP:
+                    mControlService.udpSendMsgToTankServer(
+                            Utils.parseCmd(Utils.MSG_TANK_GO_FORWARD));
+                    break;
+                case VirtualJoystick.MOVE_BUTTOM:
+                    mControlService.udpSendMsgToTankServer(
+                            Utils.parseCmd(Utils.MSG_TANK_GO_BACK));
+                    break;
+                case VirtualJoystick.MOVE_LEFT:
+                    mControlService.udpSendMsgToTankServer(
+                            Utils.parseCmd(Utils.MSG_TANK_GO_LEFT));
+                    break;
+                case VirtualJoystick.MOVE_RIGHT:
+                    mControlService.udpSendMsgToTankServer(
+                            Utils.parseCmd(Utils.MSG_TANK_GO_RIGHT));
+                    break;
+                case VirtualJoystick.MOVE_CANCEL:
+                    mControlService.udpSendMsgToTankServer(
+                            Utils.parseCmd(Utils.MSG_TANK_STOP_RUN));
+                    break;
+            }
+        }
+        else
+        if(v.getId() == R.id.servo_virtualJoystick) {
+            switch (event) {
+                case VirtualJoystick.MOVE_TOP:
+                    mControlService.udpSendMsgToTankServer(
+                            Utils.parseCmd(Utils.MSG_SERVO_GO_UP));
+                    break;
+                case VirtualJoystick.MOVE_BUTTOM:
+                    mControlService.udpSendMsgToTankServer(
+                            Utils.parseCmd(Utils.MSG_SERVO_GO_DOWN));
+                    break;
+                case VirtualJoystick.MOVE_LEFT:
+                    mControlService.udpSendMsgToTankServer(
+                            Utils.parseCmd(Utils.MSG_SERVO_GO_LEFT));
+                    break;
+                case VirtualJoystick.MOVE_RIGHT:
+                    mControlService.udpSendMsgToTankServer(
+                            Utils.parseCmd(Utils.MSG_SERVO_GO_RIGHT));
+                    break;
+                case VirtualJoystick.MOVE_CANCEL:
+                    mControlService.udpSendMsgToTankServer(
+                            Utils.parseCmd(Utils.MSG_SERVO_STOP_RUN));
+                    break;
+            }
+        }
+        return true;
+    }
 
 }
