@@ -1,7 +1,9 @@
 package com.fury;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Handler;
+import android.os.Message;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -10,6 +12,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.RelativeLayout;
+
+import java.util.Timer;
+import java.util.TimerTask;
 
 /**
  * Created by android on 16-6-28.
@@ -25,6 +30,12 @@ public class VirtualJoystick extends RelativeLayout implements View.OnTouchListe
 
     public static final int MSG_FROM_VJS = 100;
 
+    public static final int MSG_TIMER1_OUT = 200;
+    public static final int MSG_TIMER2_OUT = 201;
+
+
+    public static final int LAY_GAP = 10;
+
     private RelativeLayout mMoveLayout;
     private ImageButton mMoveButton;
 
@@ -37,11 +48,17 @@ public class VirtualJoystick extends RelativeLayout implements View.OnTouchListe
     private int screenHeight;
     private int layout_w;
     private int layout_h;
+    private int layout_w2;
+    private int layout_h2;
 
     private boolean boundary_top,boundary_bottom,boundary_left,boundary_right;
     private Handler mHandler;
 
     private OnMoveListerner mOnMoveListerner = null;
+    private OnLongMoveListerner mOnLongMoveListerner = null;
+
+    private Timer mTimer;
+    private Timer mTimer2;
 
     public VirtualJoystick(Context context, AttributeSet attr) {
         super(context, attr);
@@ -63,6 +80,11 @@ public class VirtualJoystick extends RelativeLayout implements View.OnTouchListe
 
         mMoveButton = (ImageButton)findViewById(R.id.move_button);
         mParamsBak = mMoveButton.getLayoutParams();
+        layout_w2 = mParamsBak.width;
+        layout_h2 = mParamsBak.height;
+
+        Log.i(TAG, "w2:" + layout_w2 + " h2:" + layout_h2);
+
         mMoveButton.setOnTouchListener(this);
     }
 
@@ -82,21 +104,23 @@ public class VirtualJoystick extends RelativeLayout implements View.OnTouchListe
             break;
 
             case MotionEvent.ACTION_UP: {
+                stoptimer();
+
                 v.setLayoutParams(mParamsBak);
-                if(mOnMoveListerner != null) {
-                    mOnMoveListerner.onMove(VirtualJoystick.this,MOVE_CANCEL);
+                if(boundary_top || boundary_left || boundary_right || boundary_bottom) {
+                    boundary_top = false;
+                    boundary_left = false;
+                    boundary_right = false;
+                    boundary_bottom = false;
+                    if(mOnMoveListerner != null) {
+                        mOnMoveListerner.onMove(VirtualJoystick.this,MOVE_CANCEL);
+                    }
                 }
-                boundary_top = false;
-                boundary_left = false;
-                boundary_right = false;
-                boundary_bottom = false;
             }
             break;
 
             case MotionEvent.ACTION_MOVE: {
-               // Log.i(TAG,"X:"+(int)(event.getX()-event.getRawX())+" Y:"+(int)(event.getY()-event.getRawY()));
-
-                moveView(v, (int) event.getRawX(), (int) event.getRawY());
+                moveView(v, (int) event.getRawX(), (int) event.getRawY(), (int) event.getX(), (int) event.getY());
                 lastX = (int) event.getRawX();
                 lastY = (int) event.getRawY();
             }
@@ -106,8 +130,7 @@ public class VirtualJoystick extends RelativeLayout implements View.OnTouchListe
         return false;
     }
 
-
-    private void moveView(View v, int x, int y) {
+    private void moveView(View v, int x, int y, int x0, int y0) {
         int dx = x - lastX;
         int dy = y - lastY;
 
@@ -116,16 +139,15 @@ public class VirtualJoystick extends RelativeLayout implements View.OnTouchListe
         int r = v.getRight() +dx;
         int t = v.getTop() +dy;
 
-        //v.getPivotX()
+       // Log.i(TAG, "[ " + x + "," + y + " ]"+" "+"[ " + x0 + "," + y0 + " ]");
 
-        //Log.i(TAG,"[ "+t+","+b+","+","+l+","+r+" ]");
-        //Log.i(TAG, "[ " + x + "," + y + " ]");
-
+ //LEFT
         if(l < 0){
             l = 0;
             r = l +v.getWidth();
-            if(!boundary_left) {
-                Log.i(TAG,"----LEFT----");
+
+            if(!boundary_left && t > LAY_GAP && b < layout_h-LAY_GAP) {
+                Log.i(TAG,"----left----");
 
                 boundary_top = false;
                 boundary_left = true;
@@ -138,69 +160,75 @@ public class VirtualJoystick extends RelativeLayout implements View.OnTouchListe
 
                 if(mOnMoveListerner != null) {
                     mOnMoveListerner.onMove(VirtualJoystick.this,MOVE_LEFT);
+                    startTimer(MOVE_LEFT);
                 }
             }
         }
-
+//TOP
         if(t < 0){
             t = 0;
-            b = t +v.getHeight();
-            if(!boundary_top) {
-                Log.i(TAG,"----TOP----");
+            b = t + v.getHeight();
+            if (!boundary_top && l > LAY_GAP && r < layout_w-LAY_GAP) {
+                Log.i(TAG, "----top----");
 
                 boundary_top = true;
                 boundary_left = false;
                 boundary_right = false;
                 boundary_bottom = false;
 
-                if(mHandler != null) {
-                    mHandler.obtainMessage(MSG_FROM_VJS,MOVE_TOP).sendToTarget();
+                if (mHandler != null) {
+                    mHandler.obtainMessage(MSG_FROM_VJS, MOVE_TOP).sendToTarget();
                 }
 
-                if(mOnMoveListerner != null) {
+                if (mOnMoveListerner != null) {
                     mOnMoveListerner.onMove(VirtualJoystick.this, MOVE_TOP);
+                    startTimer(MOVE_TOP);
                 }
             }
         }
-
+//RIGHT
         if(r > layout_w){
             r = layout_w;
             l = r - v.getWidth();
-            if(!boundary_right) {
-                Log.i(TAG,"----RIGHT----");
+
+            if (!boundary_right && t > LAY_GAP && b < layout_h-LAY_GAP) {
+                Log.i(TAG, "----right----");
 
                 boundary_top = false;
                 boundary_left = false;
                 boundary_right = true;
                 boundary_bottom = false;
 
-                if(mHandler != null) {
-                    mHandler.obtainMessage(MSG_FROM_VJS,MOVE_RIGHT).sendToTarget();
+                if (mHandler != null) {
+                    mHandler.obtainMessage(MSG_FROM_VJS, MOVE_RIGHT).sendToTarget();
                 }
 
-                if(mOnMoveListerner != null) {
+                if (mOnMoveListerner != null) {
                     mOnMoveListerner.onMove(VirtualJoystick.this, MOVE_RIGHT);
+                    startTimer(MOVE_RIGHT);
                 }
             }
         }
-
+//BOTTOM
         if(b > layout_h){
             b = layout_h;
-            t = b -v.getHeight();
-            if(!boundary_bottom) {
-                Log.i(TAG,"----BOTTOM----");
+            t = b - v.getHeight();
+
+            if (!boundary_bottom && l > LAY_GAP && r < layout_w-LAY_GAP) {
+                Log.i(TAG, "----bottom----");
 
                 boundary_top = false;
                 boundary_left = false;
                 boundary_right = false;
                 boundary_bottom = true;
 
-                if(mHandler != null) {
-                    mHandler.obtainMessage(MSG_FROM_VJS,MOVE_BUTTOM).sendToTarget();
+                if (mHandler != null) {
+                    mHandler.obtainMessage(MSG_FROM_VJS, MOVE_BUTTOM).sendToTarget();
                 }
 
-                if(mOnMoveListerner != null) {
+                if (mOnMoveListerner != null) {
                     mOnMoveListerner.onMove(VirtualJoystick.this, MOVE_BUTTOM);
+                    startTimer(MOVE_BUTTOM);
                 }
             }
         }
@@ -209,12 +237,70 @@ public class VirtualJoystick extends RelativeLayout implements View.OnTouchListe
         v.postInvalidate();
     }
 
-
     public interface OnMoveListerner {
         boolean onMove(View v, int event);
     }
-
+    public interface OnLongMoveListerner {
+        boolean onLongMove(View v, int event);
+    }
     public void setOnMoveListerner(OnMoveListerner l) {
         mOnMoveListerner = l;
     }
+    public void setOnLongMoveListerner(OnLongMoveListerner l) {
+        mOnLongMoveListerner = l;
+    }
+
+    private void stoptimer() {
+        if(mTimer != null) {
+            mTimer.cancel();
+            mTimer = null;
+        }
+        if(mTimer2 != null) {
+            mTimer2.cancel();
+            mTimer2 = null;
+        }
+    }
+
+    private void startTimer(final int event) {
+        stoptimer();
+        if(mOnLongMoveListerner == null) {
+            return;
+        }
+
+        mTimer = new Timer();
+        mTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                mInternalHandler.obtainMessage(MSG_TIMER1_OUT, event).sendToTarget();
+
+                mTimer2 = new Timer();
+                mTimer2.schedule(new TimerTask() {
+                    @Override
+                    public void run() {
+                        mInternalHandler.obtainMessage(MSG_TIMER2_OUT, event).sendToTarget();
+                    }
+                }, 0,200);
+            }
+        }, 1200);
+    }
+
+    @SuppressLint("HandlerLeak")
+    private android.os.Handler mInternalHandler = new android.os.Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case MSG_TIMER1_OUT: {
+                    Log.i(TAG, "----Timer1 out----");
+                }
+                break;
+                case MSG_TIMER2_OUT: {
+                    Log.i(TAG, "----Timer2 out----");
+                    if(mOnLongMoveListerner != null) {
+                        mOnLongMoveListerner.onLongMove(VirtualJoystick.this,(int)msg.obj);
+                    }
+                }
+                break;
+            }
+        }
+    };
 }

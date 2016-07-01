@@ -47,7 +47,9 @@ import com.fury.MySurfaceViewTest;
 
 
 
-public class FullScreenActivity extends Activity implements  View.OnTouchListener, VirtualJoystick.OnMoveListerner {
+public class FullScreenActivity extends Activity implements  View.OnTouchListener,
+        VirtualJoystick.OnMoveListerner, VirtualJoystick.OnLongMoveListerner {
+
     public static final String TAG = "fury-FullScreenActivity";
     public static final int MSG_RECV_FROM_MJPG_SERVER = 11;
 
@@ -162,8 +164,10 @@ public class FullScreenActivity extends Activity implements  View.OnTouchListene
 
         tank_virtualJoystick = (VirtualJoystick)findViewById(R.id.tank_virtualJoystick);
         servo_virtualJoystick = (VirtualJoystick)findViewById(R.id.servo_virtualJoystick);
+
         tank_virtualJoystick.setOnMoveListerner(this);
         servo_virtualJoystick.setOnMoveListerner(this);
+        servo_virtualJoystick.setOnLongMoveListerner(this);
 
 
         mMySurfaceViewTest = (MySurfaceViewTest)findViewById(R.id.mySurfaceViewVideoFullScreen);
@@ -399,6 +403,12 @@ public class FullScreenActivity extends Activity implements  View.OnTouchListene
                     break;
             }
         }
+        return true;
+    }
+
+    public boolean onLongMove(View v, int event) {
+        //Log.i(TAG,"js onLongMove:"+v+" event:"+event);
+        onMove(v, event);
         return true;
     }
 
