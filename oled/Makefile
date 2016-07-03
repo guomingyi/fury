@@ -1,17 +1,17 @@
-BUILD_TARGET := fury_server
+BUILD_TARGET := oled.so
 
 
 LD := g++
 CCFLAGS := -Wall
 CCFLAGS += -g
+CCFLAGS += -shared
 
 DEPSFLAGS := -lpthread 
 DEPSFLAGS += -lwiringPi
-DEPSFLAGS += ../oled/oled.so
-
 
 BUILD_SRC := \
     $(shell find . -name '*.c' -o -name '*.cpp' -o -name '*.h')
+
 
 all:$(BUILD_SRC)
 	$(LD) -o $(BUILD_TARGET) $(CCFLAGS) $(DEPSFLAGS) $(BUILD_SRC)  

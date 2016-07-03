@@ -546,6 +546,8 @@ set_servo(int servo, int width)
 	int i;
 	uint32_t mask = 1 << servo2gpio[servo];
 
+printf("set_servo:%d,%d\n",servo,width);
+
 
 	if (width > servowidth[servo]) {
 		dp = turnoff_mask + servostart[servo] + width;
@@ -863,6 +865,9 @@ go_go_go(void)
 		if ((n = select(fd+1, &ifds, NULL, NULL, &tv)) != 1)
 			continue;
 		while (read(fd, line+nchars, 1) == 1) {
+
+            printf("gogogo:[%d]:%s\n",nchars,line);
+
 			if (line[nchars] == '\n') {
 				line[++nchars] = '\0';
 				nchars = 0;
@@ -870,6 +875,10 @@ go_go_go(void)
 					int hdr, pin, width;
 
 					n = sscanf(line+1, "%d-%d=%s", &hdr, &pin, width_arg);
+
+					printf("gogogo:%d-%d=%s\n",hdr,pin,width_arg);
+
+
 					if (n != 3) {
 						fprintf(stderr, "Bad input: %s", line);
 					} else if (hdr != 1 && hdr != 5) {
@@ -895,6 +904,9 @@ go_go_go(void)
 					}
 				} else {
 					n = sscanf(line, "%d=%s", &servo, width_arg);
+
+					printf("gogogo:%d=%s\n",servo,width_arg);
+				
 					if (!strcmp(line, "debug\n")) {
 						do_debug();
 					} else if (!strncmp(line, "status ", 7)) {
@@ -912,6 +924,9 @@ go_go_go(void)
 					}
 				}
 			} else {
+
+				printf("gogogo:err!\n");
+
 				if (++nchars >= 126) {
 					fprintf(stderr, "Input too long\n");
 					nchars = 0;

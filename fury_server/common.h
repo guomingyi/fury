@@ -20,6 +20,7 @@
 #include <softServo.h>
 #include <softPwm.h>
 
+#include "../oled/oled.h"
 
 //////////////////////////////////////////////////////////////////////
 #define printf(fmt, args...) do{ \
@@ -29,7 +30,7 @@
 }while(0)
 
 
-#define UBUNTU_HOST 1
+#define UBUNTU_HOST 0
 
 #if UBUNTU_HOST
 #define pinMode(...)

@@ -195,14 +195,11 @@ int test_socket_init(void)
 
 #if 1
 {
+	printf("---test---\n");
+	oled_test();
 
-
-writeServo(4, 90);
-
-
-
-  for (;;)
-    delay (10) ;
+	for (;;)
+		delay (10) ;
 }
 
 

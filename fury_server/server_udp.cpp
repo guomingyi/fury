@@ -106,6 +106,8 @@ int server_socket_init(void)
     tank_gpio_init();
     send_socket_init();
 	do_action(MSG_CAMERA_CLOSE);
+
+    system("sudo /home/pi/coding/github/fury/ServoBlaster/user/servod --p1pins=0,0,0,0,0,16,18");
 	
     while(1) {
 		

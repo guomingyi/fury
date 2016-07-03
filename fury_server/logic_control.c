@@ -152,7 +152,7 @@ int tank_gpio_init(void)
         return 0;
     }
 
-    wiringPiSetup();  
+    //wiringPiSetup();  
 
     pinMode(GPIO_PIN_IN1, OUTPUT); 
     pinMode(GPIO_PIN_IN2, OUTPUT);
@@ -189,7 +189,7 @@ int tank_gpio_init(void)
     play_beep(1);
 #endif
 
-return 0;
+	return 0;
 }
 
 void myInterrupt0(void) {
@@ -514,7 +514,7 @@ void stop_camera(void) {
 
 int servo_run_logic(int cmd) {
 	if(cmd == 1) { //up
-	    servo_v += 10;
+	    servo_v -= 10;
 		if(servo_v >= 250) {
 			servo_v = 250;
 		}
@@ -522,7 +522,7 @@ int servo_run_logic(int cmd) {
 	}
 	else
 	if(cmd == 2) { //down
-	    servo_v -= 10;
+	    servo_v += 10;
 		if(servo_v <= 50) {
 			servo_v = 50;
 		}
@@ -547,8 +547,9 @@ int servo_run_logic(int cmd) {
 	else
 	if(cmd == 5) {
 		//servo_v = servo_l = 90;
-		//write_to_servo(6,servo_v);
-		//write_to_servo(5,servo_l);
+		write_to_servo(6,0);
+		write_to_servo(5,0);
+
 	}
 
 	return 0;
@@ -568,7 +569,7 @@ int write_to_servo(int pin, int duty) {
 	memset(buf, 0, MAX_BUFFER_SIZE);
 
 	// echo 0=150 > /dev/servoblaster
-	len = sprintf(buf,"%d=%d",pin, duty);  
+	len = sprintf(buf,"%d=%d\n",pin, duty);  
 
 	printf("len:%d\n", len);
 	printf("echo %s >%s \n", buf, DEVFILE);
@@ -584,6 +585,8 @@ int write_to_servo(int pin, int duty) {
 	}
 
 	close(fd);
+
+    delay(300);
 	return 0;
 }
 
