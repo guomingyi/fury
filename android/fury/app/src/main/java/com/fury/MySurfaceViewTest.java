@@ -6,7 +6,9 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Matrix;
 import android.graphics.Paint;
+
 import android.os.Message;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
@@ -31,7 +33,7 @@ import com.fury.MainActivity;
 
 public class MySurfaceViewTest extends SurfaceView implements Callback
 {
-public static final boolean dbg = false;
+public static final boolean dbg = true;
 private static final String TAG = "fury-MySurfaceViewTest";
 private SurfaceHolder sfh;
 private Canvas canvas;
@@ -50,7 +52,7 @@ private boolean start_run = false;
 
 protected static final int MSG_RECV_FROM_FURY_SERVER = 10;
 protected static final int MSG_RECV_FROM_MJPG_SERVER = 11;
-private static final int BUF_SIZE = 512 * 1024;
+private static final int BUF_SIZE = 1024 * 1024;
 
 public final static int SERVER_SEND_PORT = MainActivity.CAM_SERVER_PORT;
 private final static int SERVER_RECV_PORT = MainActivity.CAM_SERVER_UDP_RECV_PORT;
@@ -86,7 +88,7 @@ public void surfaceChanged(SurfaceHolder holder, int format, int width, int heig
 	Log.i(TAG, "surfaceChanged:"+this);
 }
 public void surfaceDestroyed(SurfaceHolder holder) {
-	Log.i(TAG, "surfaceDestroyed:"+this);
+	Log.i(TAG, "surfaceDestroyed:" + this);
 }
 
 public void setHostIp(String ip){
@@ -163,10 +165,15 @@ private void drawVideoSurface(boolean r) {
 
 			times = System.currentTimeMillis();
 
-			byte[] show_buf = new byte[512*1024];
+			byte[] show_buf = new byte[1024*1024];
 			int show_length = 0;
 
+			Matrix mMatrix = new Matrix();
+			mMatrix.setRotate(180);
+
 			Log.i(TAG, "udp recv_socket wait..");
+
+			//DatagramPacket recv_pkt = new DatagramPacket(frame_buf, frame_buf.length);
 
 			while(true) {
 				try {
@@ -203,7 +210,7 @@ private void drawVideoSurface(boolean r) {
 					}
 
 					BitmapFactory.Options opts=new BitmapFactory.Options();
-					opts.inJustDecodeBounds = false;
+					//opts.inJustDecodeBounds = false;
 					opts.inPreferredConfig = Bitmap.Config.RGB_565;
 					opts.inSampleSize = 1;
 					Bitmap bmp = BitmapFactory.decodeStream(new ByteArrayInputStream(show_buf),null,opts);
@@ -229,7 +236,8 @@ private void drawVideoSurface(boolean r) {
                     x = (mScreenWidth - width) /2;
 					y = Is_Scale ? 0 : ((mScreenHeight - height) /2);
 
-					mBitmap = Bitmap.createScaledBitmap(bmp, width, height, false);
+					Bitmap bb = Bitmap.createBitmap(bmp, 0, 0, bmp.getWidth(), bmp.getHeight(), mMatrix, false);
+					mBitmap = Bitmap.createScaledBitmap(bb, width, height, false);
 
 					canvas = sfh.lockCanvas();
 					canvas.drawColor(Color.BLACK);
@@ -247,14 +255,21 @@ private void drawVideoSurface(boolean r) {
 						break;
 					}
 
-					//mCount = 1;
+					mCount = 1;
 					send_socket.send(send_pkt);
 
 				}
 				catch (Exception e) {
 					e.printStackTrace();
-					Log.i(TAG, "E:" + e.toString());
+					Log.i(TAG, "Ex:" + e.toString());
 					mCount = 1;
+					try {
+						send_socket.send(send_pkt);
+					}
+					catch (Exception ex){
+
+					}
+
 				}
 			}
 
@@ -304,7 +319,7 @@ private void scheduleSendUdp() {
 	mTimer.schedule(new TimerTask() {
 		@Override
 		public void run() {
-
+			//if(true) {
 			if (mCount == 1) {
 				//send msg to mjpg server,port 8080.
 				try {

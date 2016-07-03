@@ -24,11 +24,11 @@ android {
             if(output.outputFile.name.indexOf('-debug.apk') > -1){
                 output.outputFile = new File(
                         output.outputFile.parent,
-                        output.outputFile.name.replace(apk_name, "fruy_v${defaultConfig.versionName}_${releaseTime()}_debug.apk"))
+                        output.outputFile.name.replace(apk_name, "fruy_v${defaultConfig.versionName}_debug.apk"))
             }else if(output.outputFile.name.indexOf('-release.apk') > -1){
                 output.outputFile = new File(
                         output.outputFile.parent,
-                        output.outputFile.name.replace(apk_name,"fruy_v${defaultConfig.versionName}_${releaseTime()}.apk"))
+                        output.outputFile.name.replace(apk_name,"fruy_v${defaultConfig.versionName}.apk"))
             }
         }
     }

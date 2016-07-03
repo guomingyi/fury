@@ -47,7 +47,9 @@ import com.fury.MySurfaceViewTest;
 
 
 
-public class FullScreenActivity extends Activity implements  View.OnTouchListener, VirtualJoystick.OnMoveListerner {
+public class FullScreenActivity extends Activity implements  View.OnTouchListener,
+        VirtualJoystick.OnMoveListerner, VirtualJoystick.OnLongMoveListerner {
+
     public static final String TAG = "fury-FullScreenActivity";
     public static final int MSG_RECV_FROM_MJPG_SERVER = 11;
 
@@ -162,8 +164,10 @@ public class FullScreenActivity extends Activity implements  View.OnTouchListene
 
         tank_virtualJoystick = (VirtualJoystick)findViewById(R.id.tank_virtualJoystick);
         servo_virtualJoystick = (VirtualJoystick)findViewById(R.id.servo_virtualJoystick);
+
         tank_virtualJoystick.setOnMoveListerner(this);
         servo_virtualJoystick.setOnMoveListerner(this);
+        servo_virtualJoystick.setOnLongMoveListerner(this);
 
 
         mMySurfaceViewTest = (MySurfaceViewTest)findViewById(R.id.mySurfaceViewVideoFullScreen);
@@ -212,7 +216,7 @@ public class FullScreenActivity extends Activity implements  View.OnTouchListene
                     Log.i(TAG, "onTouch:"+v);
                     showJs(true);
                 }
-                else {
+                else if(action == MotionEvent.ACTION_UP) {
 
                 }
             } break;
@@ -221,8 +225,9 @@ public class FullScreenActivity extends Activity implements  View.OnTouchListene
                     mControlService.udpSendMsgToTankServer(
                             Utils.parseCmd(Utils.MSG_TANK_GO_FORWARD));
                 }
-                else {
-
+                else if(action == MotionEvent.ACTION_UP) {
+                    mControlService.udpSendMsgToTankServer(
+                            Utils.parseCmd(Utils.MSG_TANK_STOP_RUN));
                 }
             } break;
             case R.id.btn_back: {
@@ -239,8 +244,9 @@ public class FullScreenActivity extends Activity implements  View.OnTouchListene
                     mControlService.udpSendMsgToTankServer(
                             Utils.parseCmd(Utils.MSG_TANK_GO_LEFT));
                 }
-                else {
-
+                else if(action == MotionEvent.ACTION_UP) {
+                    mControlService.udpSendMsgToTankServer(
+                            Utils.parseCmd(Utils.MSG_TANK_STOP_RUN));
                 }
             } break;
             case R.id.btn_turn_right: {
@@ -248,8 +254,9 @@ public class FullScreenActivity extends Activity implements  View.OnTouchListene
                     mControlService.udpSendMsgToTankServer(
                             Utils.parseCmd(Utils.MSG_TANK_GO_RIGHT));
                 }
-                else {
-
+                else if(action == MotionEvent.ACTION_UP) {
+                    mControlService.udpSendMsgToTankServer(
+                            Utils.parseCmd(Utils.MSG_TANK_STOP_RUN));
                 }
             } break;
             case R.id.btn_led: {
@@ -257,7 +264,7 @@ public class FullScreenActivity extends Activity implements  View.OnTouchListene
                     mControlService.udpSendMsgToTankServer(
                             Utils.parseCmd(Utils.MSG_LED_OPEN));
                 }
-                else {
+                else if(action == MotionEvent.ACTION_UP) {
 
                 }
             } break;
@@ -266,7 +273,7 @@ public class FullScreenActivity extends Activity implements  View.OnTouchListene
                     mControlService.udpSendMsgToTankServer(
                             Utils.parseCmd(Utils.MSG_SERVO_GO_UP));
                 }
-                else {
+                else if(action == MotionEvent.ACTION_UP) {
 
                 }
             } break;
@@ -275,7 +282,7 @@ public class FullScreenActivity extends Activity implements  View.OnTouchListene
                     mControlService.udpSendMsgToTankServer(
                             Utils.parseCmd(Utils.MSG_SERVO_GO_DOWN));
                 }
-                else {
+                else if(action == MotionEvent.ACTION_UP) {
 
                 }
             } break;
@@ -293,7 +300,7 @@ public class FullScreenActivity extends Activity implements  View.OnTouchListene
                     mControlService.udpSendMsgToTankServer(
                             Utils.parseCmd(Utils.MSG_SERVO_GO_RIGHT));
                 }
-                else {
+                else if(action == MotionEvent.ACTION_UP) {
 
                 }
             } break;
@@ -302,7 +309,7 @@ public class FullScreenActivity extends Activity implements  View.OnTouchListene
                     mControlService.udpSendMsgToTankServer(
                             Utils.parseCmd(Utils.MSG_CAMERA_OPEN));
                 }
-                else {
+                else if(action == MotionEvent.ACTION_UP) {
 
                 }
             } break;
@@ -396,6 +403,12 @@ public class FullScreenActivity extends Activity implements  View.OnTouchListene
                     break;
             }
         }
+        return true;
+    }
+
+    public boolean onLongMove(View v, int event) {
+        //Log.i(TAG,"js onLongMove:"+v+" event:"+event);
+        onMove(v, event);
         return true;
     }
 
