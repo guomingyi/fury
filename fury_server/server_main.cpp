@@ -25,11 +25,13 @@ DEPSFLAGS := -lpthread
 */
 
 int debug = 0;
+static int mCurrTmp = 0;
 
 static pthread_t socket_thd = 0;
 static pthread_t work_thd = 0;
 static pthread_t display_thd = 0;
-static int mCurrTmp = 0;
+static pthread_t speed_thd = 0;
+
 
 static double getCpuTmp(void)
 {
@@ -54,6 +56,39 @@ static double getCpuTmp(void)
     close(fd);
   
     return temp;
+}
+
+
+static void myInterrupt10(void) {
+    printf ("a-1111\n") ;
+
+}
+static void myInterrupt11(void) {
+    printf ("a-2222\n") ;
+
+}
+static void myInterrupt12(void) {
+    printf ("b-3333\n") ;
+
+}
+static void myInterrupt13(void) {
+    printf ("b-4444\n") ;
+
+}
+static void *speed_monitor_thread(void *args) {
+
+    pinMode(1, INPUT); 
+    pinMode(6, INPUT); 
+    pinMode(10, INPUT);
+    pinMode(11, INPUT);
+
+	wiringPiISR(1, INT_EDGE_FALLING, &myInterrupt10) ;
+	wiringPiISR(6, INT_EDGE_FALLING, &myInterrupt11) ;
+	wiringPiISR(10, INT_EDGE_FALLING, &myInterrupt12) ;
+    wiringPiISR(11, INT_EDGE_FALLING, &myInterrupt13) ;
+
+	pthread_exit(NULL);   
+	return NULL;
 }
 
 static void *work_main_thread(void *args) 
@@ -165,10 +200,12 @@ int main(int argc,char *argv[])
 	pthread_create(&work_thd, NULL, work_main_thread, NULL);
 	pthread_create(&socket_thd, NULL, server_socket_thread, NULL);
 	pthread_create(&display_thd, NULL, display_thread, NULL);
+    pthread_create(&speed_thd, NULL, speed_monitor_thread, NULL);
 
     pthread_join(work_thd, NULL); 
     pthread_join(socket_thd, NULL); 
     pthread_join(display_thd, NULL); 
+    pthread_join(speed_thd, NULL);
 
 	return EXIT_SUCCESS;
 }
