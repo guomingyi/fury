@@ -7,7 +7,7 @@ CCFLAGS += -g
 
 DEPSFLAGS := -lpthread 
 DEPSFLAGS += -lwiringPi
-DEPSFLAGS += ../oled/oled.so
+DEPSFLAGS += /home/pi/coding/github/fury/oled/oled.so
 
 
 BUILD_SRC := \

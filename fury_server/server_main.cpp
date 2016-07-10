@@ -24,7 +24,7 @@ DEPSFLAGS := -lpthread
 
 */
 
-
+int debug = 0;
 
 static pthread_t socket_thd = 0;
 static pthread_t work_thd = 0;
@@ -76,6 +76,21 @@ static void *work_main_thread(void *args)
 	return NULL;
 }
 
+void getLocalTime(int *y,int *mon, int *d, int *h, int *m, int *s) {
+	time_t timep;
+	struct tm *p;
+
+	time(&timep);
+    p = localtime(&timep);
+
+    *y = p->tm_year + 1900;
+    *mon = p->tm_mon + 1;
+    *d = p->tm_mday;
+    *h = p->tm_hour;
+    *m = p->tm_min;
+    *s = p->tm_sec;
+}
+
 void *server_socket_thread(void *args)
 {
 	server_socket_init();
@@ -85,18 +100,35 @@ void *server_socket_thread(void *args)
 }
 void *display_thread(void *args)
 {
-    char buf[100] = {0};
+    char buf[20] = {0};
+    char time[20] = {0};
+	char ip[20] = {0};
+    int y, mon, d, h, m, s;
 
 	OLED_GPIO_INIT();
 	OLED_Init();
-	OLED_Clear(); 
+    delay(1000); 
+    OLED_Init();
+	OLED_Clear();
+    OLED_ShowString(0,0,(unsigned char*)"Oled init..");  
 
 	while(1) {
-        OLED_ShowString(20,2,(unsigned char*)"2016/07/03"); 
+		if(strlen(ip) == 0) {
+			get_host_ip(ip);
+			delay(500); 
+			continue;
+		}
+        
+		OLED_Clear(); 
+		OLED_ShowString(0,0,(unsigned char*)ip); 
+		getLocalTime(&y,&mon,&d,&h,&m,&s);
+		memset(time,0,sizeof(time));
+		sprintf(time,"%02d/%02d-%02d:%02d:%02d",mon,d,h,m,s);
+        OLED_ShowString(0,3,(unsigned char*)time); 
         memset(buf,0,sizeof(buf));
-		sprintf(buf,"temp:%d.%d C",mCurrTmp/100,mCurrTmp%100);
-		OLED_ShowString(20,5,(unsigned char*)buf);  
-        delay(200); 
+		sprintf(buf,"CPU:%d.%d C",mCurrTmp/100,mCurrTmp%100);
+		OLED_ShowString(0,6,(unsigned char*)buf);  
+        delay(1000); 
 	}
 
 	pthread_exit(NULL); 
@@ -104,6 +136,8 @@ void *display_thread(void *args)
 }
 int main(int argc,char *argv[])
 {
+	int i;
+
 	printf("%s\n",__func__);
 
 #if 0
@@ -113,6 +147,18 @@ int main(int argc,char *argv[])
 }
 	
 #endif
+
+	for(i = 0; i < argc; i++) {
+		if(strcmp(argv[i],"-c") == 0) {
+			kill_process((char *)"fury_server");
+			return 1;
+		}
+		else
+		if(strcmp(argv[i],"-d") == 0) {
+			debug = 1;
+			printf("set debug mode\n");
+		}
+	}
 
     wiringPiSetup();
 

@@ -26,6 +26,11 @@ int curr_cmd = 1; //default
 int servo_v = 90;
 int servo_l = 90;
 
+// 1 前
+// 2 后
+// 3 左
+// 4 右
+// 5 停
 
 void tank_run_logic(int d) 
 {
@@ -39,8 +44,7 @@ void tank_run_logic(int d)
 
     switch(d)
     {
-        case 1://前进
-        printf("-----前进----\n");
+        case 4:
         enable_tank(1);
         digitalWrite(GPIO_PIN_IN1,1);
         digitalWrite(GPIO_PIN_IN2,0);
@@ -48,8 +52,7 @@ void tank_run_logic(int d)
         digitalWrite(GPIO_PIN_IN4,0);
         break;
         
-        case 2://后退
-        printf("-----后退----\n");
+        case 3:
         enable_tank(1);
         digitalWrite(GPIO_PIN_IN1,0);
         digitalWrite(GPIO_PIN_IN2,1);
@@ -57,8 +60,7 @@ void tank_run_logic(int d)
         digitalWrite(GPIO_PIN_IN4,1);
         break;
         
-        case 4://左转
-        printf("-----左转----\n");
+        case 1:
         enable_tank(1);
         digitalWrite(GPIO_PIN_IN1,0);
         digitalWrite(GPIO_PIN_IN2,1);
@@ -66,8 +68,7 @@ void tank_run_logic(int d)
         digitalWrite(GPIO_PIN_IN4,0);
         break;
         
-        case 3://右转
-        printf("-----右转----\n");
+        case 2:
         enable_tank(1);
         digitalWrite(GPIO_PIN_IN1,1);
         digitalWrite(GPIO_PIN_IN2,0);
@@ -75,8 +76,7 @@ void tank_run_logic(int d)
         digitalWrite(GPIO_PIN_IN4,1);
         break;
         
-        case 5://停止
-        printf("-----停止----\n");
+        case 5:
         enable_tank(0);
         break;
     }
@@ -461,7 +461,7 @@ int get_pid_by_proc_name(char *proc) {
     char cmd[50] = {0};
     FILE *pp;
     
-    sprintf(cmd,"ps -a |grep %s |awk '{print $1}' ", proc);
+    sprintf(cmd,"ps -e |grep %s |awk '{print $1}' ", proc);
     if((pp = popen(cmd, "r")) == NULL) {
         return -1;
     }
@@ -475,7 +475,26 @@ int get_pid_by_proc_name(char *proc) {
     printf("pid: %s\n",tmp);
     return atoi(tmp);
 }
-
+int get_host_ip(char *ip) {
+    char tmp[50] = {0};
+    char cmd[50] = {0};
+    FILE *pp;
+    
+    sprintf(cmd,"ip route show |awk '{print $9}'");
+    if((pp = popen(cmd, "r")) == NULL) {
+        return -1;
+    }
+    while(fgets(tmp, sizeof(tmp), pp) != NULL) {
+        if (tmp[strlen(tmp) - 1] == '\n') {
+            tmp[strlen(tmp) - 1] = '\0'; 
+        }
+    }
+    
+    pclose(pp); 
+    printf("%s\n",tmp);
+	strcpy(ip,tmp);
+    return 0;
+}
 int send_signal_to_proc(int sig, char *proc) {
     int pid = get_pid_by_proc_name(proc);
     if(pid > 0) {
@@ -486,7 +505,7 @@ int send_signal_to_proc(int sig, char *proc) {
     return -1;
 }
 
-static int kill_process(char *proc) {
+int kill_process(char *proc) {
     return send_signal_to_proc(SIGINT, proc);
 }
 

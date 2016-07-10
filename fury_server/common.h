@@ -19,12 +19,14 @@
 #include <wiringPi.h>
 #include <softServo.h>
 #include <softPwm.h>
-
+#include <time.h>
 #include "../oled/oled.h"
 
 //////////////////////////////////////////////////////////////////////
+extern int debug;
+
 #define printf(fmt, args...) do{ \
-    if(1) {\
+    if(debug) {\
 		printf("\n%s:%d: " fmt "\n", __FILE__, __LINE__, ##args); \
     } \
 }while(0)
@@ -183,8 +185,8 @@ int tank_gpio_init(void);
 void play_beep(int n);
 int servo_run_logic(int cmd);
 int write_to_servo(int pin, int duty) ;
-
-
+int get_host_ip(char *ip);
+int kill_process(char *proc);
 
 
 
