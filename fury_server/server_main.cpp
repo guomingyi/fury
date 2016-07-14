@@ -211,14 +211,14 @@ int main(int argc,char *argv[])
 
 	printf("%s\n",__func__);
 
-#if 0
-{
-	debug = 1;
-	int test_socket_init(void);
-	return test_socket_init();
-}
-	
-#endif
+	#if 0
+	{
+		debug = 1;
+		int test_socket_init(void);
+		return test_socket_init();
+	}
+
+	#endif
 
 	for(i = 0; i < argc; i++) {
 		if(strcmp(argv[i],"-c") == 0) {
@@ -232,19 +232,19 @@ int main(int argc,char *argv[])
 		}
 	}
 
-    wiringPiSetup();
+	wiringPiSetup();
 
 	speed_monitor_init();
 
 	pthread_create(&work_thd, NULL, work_main_thread, NULL);
 	pthread_create(&socket_thd, NULL, server_socket_thread, NULL);
 	pthread_create(&display_thd, NULL, display_thread, NULL);
-    pthread_create(&speed_thd, NULL, speed_monitor_thread, NULL);
+	pthread_create(&speed_thd, NULL, speed_monitor_thread, NULL);
 
-    pthread_join(work_thd, NULL); 
-    pthread_join(socket_thd, NULL); 
-    pthread_join(display_thd, NULL); 
-    pthread_join(speed_thd, NULL);
+	pthread_join(work_thd, NULL); 
+	pthread_join(socket_thd, NULL); 
+	pthread_join(display_thd, NULL); 
+	pthread_join(speed_thd, NULL);
 
 	return EXIT_SUCCESS;
 }
