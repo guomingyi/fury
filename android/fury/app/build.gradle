@@ -10,6 +10,11 @@ android {
         targetSdkVersion 23
         versionCode 1
         versionName "1.0"
+
+        ndk {
+            moduleName "fury_jni"
+            ldLibs "log"
+        }
     }
     buildTypes {
         release {
@@ -33,6 +38,7 @@ android {
         }
     }
 
+    sourceSets.main.jni.srcDirs = ["src/jni"]
 
 }
 

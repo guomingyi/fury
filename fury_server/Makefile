@@ -8,7 +8,7 @@ CCFLAGS += -g
 DEPSFLAGS := -lpthread 
 DEPSFLAGS += -lwiringPi
 DEPSFLAGS += /home/pi/coding/github/fury/oled/oled.so
-
+#DEPSFLAGS += ../oled/oled.so
 
 BUILD_SRC := \
     $(shell find . -name '*.c' -o -name '*.cpp' -o -name '*.h')

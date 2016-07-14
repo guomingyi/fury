@@ -21,7 +21,7 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Arrays;
-
+import com.fury.jni.Native;
 
 public class ControlService extends Service {
     private static final String TAG = "fury-ControlService";
@@ -47,6 +47,28 @@ public class ControlService extends Service {
         Log.d(TAG, "----onCreate----");
         mContext = this;
 
+        //nativeKeyCheck();
+    }
+
+    private boolean native_loop_exit = false;
+    public void nativeKeyCheck() {
+        new Thread() {
+            @Override
+            public void run() {
+                if(Native.native_init() < 0) {
+                    Log.e(TAG, "native_init: fail");
+                    return;
+                }
+
+                for(;;) {
+                    if(native_loop_exit) {
+                        break;
+                    }
+                    int v = Native.native_monitor();
+                    Log.i(TAG, "native_monitor:"+v);
+                }
+            }
+        }.start();
 
     }
 
@@ -60,6 +82,7 @@ public class ControlService extends Service {
     public void onDestroy() {
         super.onDestroy();
         Log.d(TAG, "onDestroy");
+        native_loop_exit = true;
     }
 
 

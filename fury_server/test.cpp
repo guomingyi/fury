@@ -176,6 +176,22 @@ return 0;
 
 }
 
+static int count = 0;
+static void sigroutine(int sig) {
+printf("---%s:%d:%d---\n",__func__,sig,++count);
+
+switch(sig) {
+	case SIGALRM:
+		signal(SIGALRM,sigroutine);
+		break;
+	case SIGVTALRM:
+		signal(SIGVTALRM,sigroutine);
+		break;
+}
+
+}
+
+
 char recv_buf[BUFFER_SIZE] = {0};
 char reply_buf[BUFFER_SIZE] = {0};
 int test_socket_init(void)
@@ -196,10 +212,33 @@ int test_socket_init(void)
 #if 1
 {
 	printf("---test---\n");
-	oled_test();
 
+struct itimerval value,ovalue,value2;
+
+if(signal(SIGALRM,sigroutine) == SIG_ERR) {
+printf("---err1---\n");
+return -1;
+}
+if(signal(SIGVTALRM,sigroutine) == SIG_ERR) {
+printf("---err2---\n");
+return -1;
+}
+
+printf("---%d,%d--\n",SIGALRM,SIGVTALRM);
+
+value.it_value.tv_sec = 1;
+value.it_value.tv_usec = 0;
+value.it_interval.tv_sec = 1;
+value.it_interval.tv_usec = 0;
+//setitimer(ITIMER_REAL,&value,&ovalue);
+
+value2.it_value.tv_sec = 0;
+value2.it_value.tv_usec = 500000;
+value2.it_interval.tv_sec = 0;
+value2.it_interval.tv_usec = 500000;
+setitimer(ITIMER_REAL,&value2,&ovalue);
 	for (;;)
-		delay (10) ;
+		delay (20) ;
 }
 
 

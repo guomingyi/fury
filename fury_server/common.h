@@ -20,6 +20,7 @@
 #include <softServo.h>
 #include <softPwm.h>
 #include <time.h>
+#include <sys/time.h>
 #include "../oled/oled.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -37,8 +38,11 @@ extern int debug;
 #if UBUNTU_HOST
 #define pinMode(...)
 #define digitalWrite(...)
+#define wiringPiISR(...)
 #define wiringPiSetup()
 #endif
+
+#define OLED_DEFINE !UBUNTU_HOST
 
 #define USE_TCP 0   //TCP or UDP
 
@@ -73,6 +77,13 @@ extern int debug;
 #define PWM_RANGE 100
 
 #define PWM_SPEED_CHANGE 1
+
+// SPEED GPIO PIN.
+#define LEFT_SPEED_A 	1
+#define LEFT_SPEED_B 	6
+#define RIGHT_SPEED_A 	10
+#define RIGHT_SPEED_B 	11
+
 
 #define INPUT_DEV "/dev/input/event15"   //gamepad.
 
@@ -149,8 +160,6 @@ public final static int MSG_CAMERA_CLOSE = 2004;
 #define MSG_SYS_REBOOT  2002
 #define MSG_CAMERA_OPEN  2003
 #define MSG_CAMERA_CLOSE  2004
-
-
 //协议
 //////////////////////////////////////////////////////////////////////
 

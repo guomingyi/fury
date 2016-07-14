@@ -59,33 +59,66 @@ static double getCpuTmp(void)
 }
 
 
-static void myInterrupt10(void) {
-    printf ("a-1111\n") ;
 
+static int counter = 0;
+static void myInterrupt10(void) {
+    printf ("a-1\n") ;
+    counter++;
 }
 static void myInterrupt11(void) {
-    printf ("a-2222\n") ;
-
+    printf ("a-2\n") ;
+    counter++;
 }
 static void myInterrupt12(void) {
-    printf ("b-3333\n") ;
+    printf ("b-1\n") ;
 
 }
 static void myInterrupt13(void) {
-    printf ("b-4444\n") ;
+    printf ("b-2\n") ;
 
 }
+
+static void sigroutine(int sig) {
+	if(SIGALRM == sig) {
+		printf("---counter:%d---\n",counter);
+		if(counter != 0) {
+			counter = 0;
+		}
+		
+		signal(SIGALRM,sigroutine);
+	}
+}
+
+static void speed_monitor_init(void) {
+	struct itimerval value,ovalue;
+
+	if(signal(SIGALRM,sigroutine) == SIG_ERR) {
+		printf("---signal err---\n");
+		return;
+	}
+
+	value.it_value.tv_sec = 0;
+	value.it_value.tv_usec = 500000;
+	value.it_interval.tv_sec = 1;
+	value.it_interval.tv_usec = 500000;
+	setitimer(ITIMER_REAL,&value,&ovalue);
+
+	pinMode(LEFT_SPEED_A, INPUT); 
+	pinMode(LEFT_SPEED_B, INPUT); 
+	pinMode(RIGHT_SPEED_A, INPUT);
+	pinMode(RIGHT_SPEED_B, INPUT);
+
+	wiringPiISR(LEFT_SPEED_A, INT_EDGE_FALLING, &myInterrupt10) ;
+	wiringPiISR(LEFT_SPEED_B, INT_EDGE_FALLING, &myInterrupt11) ;
+	wiringPiISR(RIGHT_SPEED_A, INT_EDGE_FALLING, &myInterrupt12) ;
+	wiringPiISR(RIGHT_SPEED_B, INT_EDGE_FALLING, &myInterrupt13) ;
+}
+
 static void *speed_monitor_thread(void *args) {
 
-    pinMode(1, INPUT); 
-    pinMode(6, INPUT); 
-    pinMode(10, INPUT);
-    pinMode(11, INPUT);
-
-	wiringPiISR(1, INT_EDGE_FALLING, &myInterrupt10) ;
-	wiringPiISR(6, INT_EDGE_FALLING, &myInterrupt11) ;
-	wiringPiISR(10, INT_EDGE_FALLING, &myInterrupt12) ;
-    wiringPiISR(11, INT_EDGE_FALLING, &myInterrupt13) ;
+	//for(;;) {
+	//	delay(2000);
+	//}
 
 	pthread_exit(NULL);   
 	return NULL;
@@ -135,6 +168,7 @@ void *server_socket_thread(void *args)
 }
 void *display_thread(void *args)
 {
+#if OLED_DEFINE
     char buf[20] = {0};
     char time[20] = {0};
 	char ip[20] = {0};
@@ -142,6 +176,8 @@ void *display_thread(void *args)
 
 	OLED_GPIO_INIT();
 	OLED_Init();
+    delay(1000); 
+    OLED_Init();
     delay(1000); 
     OLED_Init();
 	OLED_Clear();
@@ -165,7 +201,7 @@ void *display_thread(void *args)
 		OLED_ShowString(0,6,(unsigned char*)buf);  
         delay(1000); 
 	}
-
+#endif
 	pthread_exit(NULL); 
 	return NULL;
 }
@@ -177,6 +213,7 @@ int main(int argc,char *argv[])
 
 #if 0
 {
+	debug = 1;
 	int test_socket_init(void);
 	return test_socket_init();
 }
@@ -196,6 +233,8 @@ int main(int argc,char *argv[])
 	}
 
     wiringPiSetup();
+
+	speed_monitor_init();
 
 	pthread_create(&work_thd, NULL, work_main_thread, NULL);
 	pthread_create(&socket_thd, NULL, server_socket_thread, NULL);

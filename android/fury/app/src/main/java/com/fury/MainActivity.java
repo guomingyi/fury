@@ -45,7 +45,7 @@ import com.fury.ControlService.ControlServiceBinder;
 import android.content.Context;
 import com.fury.MySurfaceView;
 import com.fury.MySurfaceViewTest;
-
+import com.fury.jni.Native;
 
 
 public class MainActivity extends Activity implements  View.OnTouchListener {
@@ -200,11 +200,17 @@ public class MainActivity extends Activity implements  View.OnTouchListener {
     bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
 
 
+    //int ret = Native.native_init();
+    //Log.i(TAG,"ret:"+ret);
+
+
     //test
     Intent i = new Intent();
-    i.setClassName(this.getPackageName(), "com.fury.FullScreenActivity");
-   // startActivity(i);
+    //i.setClassName(this.getPackageName(), "com.fury.FullScreenActivity");
+    i.setClassName(this.getPackageName(), "com.fury.sensorDemo");
+    //startActivity(i);
 
+    //finish();
   }
 
   public void onStart() {
@@ -774,7 +780,14 @@ private void reciverMsgFromServer() {
       if(sft != null) {
         sft.stop();
       }
-      finish();
+      //finish();
+      try {
+        Thread.sleep(500);
+        System.exit(0);
+      }catch (Exception e) {
+        e.printStackTrace();
+      }
+
     }
     return true;
   }
