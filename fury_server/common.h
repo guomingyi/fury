@@ -42,7 +42,7 @@ extern int debug;
 #define wiringPiSetup()
 #endif
 
-#define OLED_DEFINE !UBUNTU_HOST
+#define OLED_DEFINE 1
 
 #define USE_TCP 0   //TCP or UDP
 

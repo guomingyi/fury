@@ -7,14 +7,15 @@ CCFLAGS += -g
 
 DEPSFLAGS := -lpthread 
 DEPSFLAGS += -lwiringPi
-DEPSFLAGS += /home/pi/coding/github/fury/oled/oled.so
-#DEPSFLAGS += ../oled/oled.so
+DEPSFLAGS += -lm -lcrypt -lrt -lm
+#DEPSFLAGS += /home/pi/coding/github/fury/oled/oled.so
+DEPSFLAGS += ../oled/oled.so
 
 BUILD_SRC := \
     $(shell find . -name '*.c' -o -name '*.cpp' -o -name '*.h')
 
 all:$(BUILD_SRC)
-	$(LD) -o $(BUILD_TARGET) $(CCFLAGS) $(DEPSFLAGS) $(BUILD_SRC)  
+	$(LD) -o $(BUILD_TARGET) $(CCFLAGS) $(BUILD_SRC) $(DEPSFLAGS)  
 
 
 clean:  
