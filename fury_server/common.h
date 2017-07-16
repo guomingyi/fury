@@ -171,6 +171,7 @@ int client_socket_init(const char *ip_addr, int port_num);
 int reciver(void);
 int event_register(void);
 void input_event_thread(void);
+int test_input_key_event(void);
 void socket_thread(void);
 int sendto_server(char *buf);
 int sendto_server(input_event *evt);

@@ -342,3 +342,69 @@ error:
 
 #endif
 
+#define DEV_PATH "/dev/input/event0"   //difference is possible
+
+int test_input_key_event(void)
+{
+    int keys_fd;
+    char ret[2];
+    struct input_event t;
+    keys_fd=open(DEV_PATH, O_RDONLY);
+    if(keys_fd <= 0)
+    {
+        printf("open %s device error!\n", DEV_PATH);
+        return -1;
+    }
+    while(1)
+    {
+        if(read(keys_fd, &t, sizeof(t)) == sizeof(t))
+        {
+           // printf("type,code,value:(%d,%d,%d)\n",t.type,t.code,t.value);
+
+            if(t.type==EV_KEY) {
+                if(t.value == 1)
+                {
+                    printf("key %d %s\n", t.code, (t.value) ? "Pressed" : "Released");
+                    if (t.code == 304) {
+                         do_action(MSG_TANK_GO_FORWARD);  
+                    }
+                    else
+                    if (t.code == 306) {
+                         do_action(MSG_TANK_GO_BACK);  
+                    }
+                    else
+                    if (t.code == 307) {
+                        do_action(MSG_TANK_GO_LEFT);
+                    }
+                    else
+                    if (t.code == 305) {
+                         do_action(MSG_TANK_GO_RIGHT);  
+                    }  
+                    else
+                    if (t.code == 311) {
+                        do_action(MSG_TANK_SPEED_DEC);  
+                    } 
+                    else
+                    if (t.code == 310) {
+                        do_action(MSG_TANK_SPEED_INC);  
+                    } 
+                }
+                else
+                if (t.value == 0) {
+                    do_action(MSG_TANK_STOP_RUN);
+                }
+            }
+            else {
+              //  printf("t.type,tcode,tvalue:%d,%d,%d\n",t.type,t.code,t.value);
+            }
+
+        }
+    }
+    close(keys_fd);
+
+
+return 0;
+}
+
+
+

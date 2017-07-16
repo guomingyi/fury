@@ -41,6 +41,7 @@ void tank_run_logic(int d)
 
 	if(d != 5)
     	curr_cmd = d;
+    printf("do run:%d\n", d);
 
     switch(d)
     {
@@ -166,7 +167,7 @@ int tank_gpio_init(void)
     pinMode(GPIO_PIN_BEEP, OUTPUT);
     digitalWrite(GPIO_PIN_BEEP,1);
     
-	play_mini_fan(0);
+	play_mini_fan(1);
 
 
 //Interrupt
@@ -428,6 +429,7 @@ int do_action(int cmd) {
     if(sprintf(buf,"%d",cmd) > 0) {
     	return do_action(buf);
     }
+    printf("do action fail!");
 	return -1;
 }
 

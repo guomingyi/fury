@@ -120,6 +120,8 @@ static void *speed_monitor_thread(void *args) {
 	//	delay(2000);
 	//}
 
+    test_input_key_event();
+
 	pthread_exit(NULL);   
 	return NULL;
 }
@@ -131,6 +133,7 @@ static void *work_main_thread(void *args)
 		double tmp = getCpuTmp();
         mCurrTmp = (int)(tmp*100);
 
+        printf("temp:%d\n",(int)tmp);
 		if(tmp >= 42) {
 			play_mini_fan(((int)tmp >= 42) ? 1 : 0);
 			sleep(10);
@@ -220,6 +223,15 @@ int main(int argc,char *argv[])
 
 	#endif
 
+    #if 0
+    {
+        debug = 1;
+        int test_input_key_event(void);
+        return test_input_key_event();
+    }
+    #endif
+
+
 	for(i = 0; i < argc; i++) {
 		if(strcmp(argv[i],"-c") == 0) {
 			kill_process((char *)"fury_server");
@@ -234,11 +246,11 @@ int main(int argc,char *argv[])
 
 	wiringPiSetup();
 
-	speed_monitor_init();
+//	speed_monitor_init();
 
+	pthread_create(&display_thd, NULL, display_thread, NULL);
 	pthread_create(&work_thd, NULL, work_main_thread, NULL);
 	pthread_create(&socket_thd, NULL, server_socket_thread, NULL);
-	pthread_create(&display_thd, NULL, display_thread, NULL);
 	pthread_create(&speed_thd, NULL, speed_monitor_thread, NULL);
 
 	pthread_join(work_thd, NULL); 
