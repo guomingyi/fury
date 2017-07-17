@@ -1,13 +1,14 @@
-BUILD_TARGET := liboled.so
+BUILD_TARGET := libjsx.so
 DESTDIR?=/usr/local/lib
 
-LD := g++
+LD := gcc
 CCFLAGS := -Wall
 CCFLAGS += -g
 CCFLAGS += -shared
 
 DEPSFLAGS := -lpthread 
-DEPSFLAGS += -lwiringPi -fPIC
+DEPSFLAGS += -fPIC 
+#DEPSFLAGS += -lwiringPi
 
 BUILD_SRC := \
     $(shell find . -name '*.c' -o -name '*.cpp' -o -name '*.h')

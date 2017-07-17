@@ -1,5 +1,7 @@
 BUILD_TARGET := fury_server
 
+DESTDIR?=/usr/local/bin
+DYNAMIC:=/usr/local/lib
 
 LD := g++
 CCFLAGS := -Wall
@@ -8,8 +10,11 @@ CCFLAGS += -g
 DEPSFLAGS := -lpthread 
 DEPSFLAGS += -lwiringPi
 DEPSFLAGS += -lm -lcrypt -lrt -lm
-#DEPSFLAGS += /home/pi/coding/github/fury/oled/oled.so
-DEPSFLAGS += ../oled/oled.so
+#DEPSFLAGS += -loled
+#DEPSFLAGS += -ljsx
+DEPSFLAGS += \
+    $(DYNAMIC)/liboled.so \
+    $(DYNAMIC)/libjsx.so
 
 BUILD_SRC := \
     $(shell find . -name '*.c' -o -name '*.cpp' -o -name '*.h')
@@ -17,6 +22,8 @@ BUILD_SRC := \
 all:$(BUILD_SRC)
 	$(LD) -o $(BUILD_TARGET) $(CCFLAGS) $(BUILD_SRC) $(DEPSFLAGS)  
 
+install:
+	cp ./$(BUILD_TARGET) $(DESTDIR)/$(BUILD_TARGET)
 
 clean:  
 	rm -rf *.o $(BUILD_TARGET) 

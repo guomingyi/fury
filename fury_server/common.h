@@ -17,7 +17,7 @@
 #include <string.h>
 
 #include <wiringPi.h>
-#include <softServo.h>
+//#include <softServo.h>
 #include <softPwm.h>
 #include <time.h>
 #include <sys/time.h>
