@@ -965,6 +965,8 @@ get_model_and_revision(void)
 	}
 	fclose(fp);
 
+printf("%s: modelstr:%s,%s\n",__func__,  modelstr, buf);
+
 	if (modelstr[0] == '\0')
 		fatal("servod: No 'Hardware' record in /proc/cpuinfo\n");
 	if (revstr[0] == '\0')
@@ -974,13 +976,15 @@ get_model_and_revision(void)
 		board_model = 1;
 	else if (strstr(modelstr, "BCM2709"))
 		board_model = 2;
+	else if (strstr(modelstr, "BCM2835"))
+        board_model = 2;
 	else
-		fatal("servod: Cannot parse the hardware name string\n");
+		fatal("servod: Cannot parse the hardware name string: %s\n",modelstr);
 
 	ptr = revstr + strlen(revstr) - 3;
 	board_revision = strtol(ptr, &end, 16);
 	if (end != ptr + 2)
-		fatal("servod: Failed to parse Revision string\n");
+		fatal("servod: Failed to parse Revision string: %s\n",revstr);
 	if (board_revision < 1)
 		fatal("servod: Invalid board Revision\n");
 	else if (board_revision < 4)

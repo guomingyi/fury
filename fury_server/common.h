@@ -197,6 +197,8 @@ int write_to_servo(int pin, int duty) ;
 int get_host_ip(char *ip);
 int kill_process(char *proc);
 
+void js_event_callback(int axes, int keycode, int is_down, int x, int y);
+
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */

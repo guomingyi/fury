@@ -45,7 +45,7 @@ void tank_run_logic(int d)
 
     switch(d)
     {
-        case 4:
+        case 2:
         enable_tank(1);
         digitalWrite(GPIO_PIN_IN1,1);
         digitalWrite(GPIO_PIN_IN2,0);
@@ -53,7 +53,7 @@ void tank_run_logic(int d)
         digitalWrite(GPIO_PIN_IN4,0);
         break;
         
-        case 3:
+        case 1:
         enable_tank(1);
         digitalWrite(GPIO_PIN_IN1,0);
         digitalWrite(GPIO_PIN_IN2,1);
@@ -61,7 +61,7 @@ void tank_run_logic(int d)
         digitalWrite(GPIO_PIN_IN4,1);
         break;
         
-        case 1:
+        case 3:
         enable_tank(1);
         digitalWrite(GPIO_PIN_IN1,0);
         digitalWrite(GPIO_PIN_IN2,1);
@@ -69,7 +69,7 @@ void tank_run_logic(int d)
         digitalWrite(GPIO_PIN_IN4,0);
         break;
         
-        case 2:
+        case 4:
         enable_tank(1);
         digitalWrite(GPIO_PIN_IN1,1);
         digitalWrite(GPIO_PIN_IN2,0);
@@ -433,9 +433,88 @@ int do_action(int cmd) {
 	return -1;
 }
 
+void js_event_callback(int axes, int keycode, int is_down, int x, int y)
+{
+    printf("%s: axes:%d, keycode:%d, down?:%d, x,y:(%d,%d)",__func__, axes, keycode, is_down, x, y);
+
+    if (is_down) {
+        switch (keycode) {
+            case 0:
+
+                do_action(MSG_SERVO_GO_UP);  
+                break;
+
+            case 1:
+
+                do_action(MSG_SERVO_GO_DOWN);  
+                break;
+
+            case 2:
+
+                do_action(MSG_SERVO_GO_LEFT);  
+                break;
+
+            case 3:
+                do_action(MSG_SERVO_GO_RIGHT);  
+                break;
+
+            case 4:
+
+                do_action(MSG_LED_OPEN);  
+                break;
+
+            case 5:
+
+                do_action(MSG_CAMERA_OPEN);  
+                break;
+
+            case 6:
+
+                do_action(MSG_TANK_SPEED_INC);  
+                break;
+
+            case 7:
+
+                do_action(MSG_TANK_SPEED_DEC);  
+                break;
+        }
+    }
+
+
+    if (axes == 2) {
+
+        if (x == 0 && y < 0) {
+            // up
+            do_action(MSG_TANK_GO_FORWARD);  
+        }
+        else if (x == 0 && y > 0) {
+            // down
+
+            do_action(MSG_TANK_GO_BACK);  
+        }
+        else if (x < 0 && y == 0) {
+            // left
+
+            do_action(MSG_TANK_GO_LEFT);  
+        }
+        else if (x > 0 && y == 0) {
+            // right
+
+            do_action(MSG_TANK_GO_RIGHT);  
+        }
+        else if (x == 0 && y == 0) {
+            // stop
+
+            do_action(MSG_TANK_STOP_RUN);  
+        } else {
+
+        }
+    }
+
+    return;
+}
 
 int camera_work_flag = 0;
-
 int exec_system_call(char *cmd) {
 #if 1
 	int ret = -1;

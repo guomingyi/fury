@@ -240,12 +240,12 @@ int js_main(int argc, char *argv[], void (*cb)(int, int, int, int ,int))
                     op_times++;
                     if (print_init_stat == 0) {
                         for (i = 0; i < number_of_btns; i++) {
-                            LOG_DBG("joystick init state: button %d is %s.\n", i, ((buttons_state & (1 << i)) == (1 << i)) ? "DOWN" : "UP");
+                            /** LOG_DBG("joystick init state: button %d is %s.\n", i, ((buttons_state & (1 << i)) == (1 << i)) ? "DOWN" : "UP"); */
                         }
 
                         if (tp_axes)
                             for (i = 0; i < number_of_axes; i++) {
-                                LOG_DBG("joystick init state: axes %d is x=%d  y=%d.\n", i, tp_axes[i].x, tp_axes[i].y);
+                                /** LOG_DBG("joystick init state: axes %d is x=%d  y=%d.\n", i, tp_axes[i].x, tp_axes[i].y); */
                             }
                         print_init_stat = 1;
                     }
@@ -259,7 +259,7 @@ int js_main(int argc, char *argv[], void (*cb)(int, int, int, int ,int))
                             buttons_state &= ~(1 << jse.number);
                         }
 
-                        LOG_DBG("joystick state: button %d is %s.\n", jse.number, down ? "DOWN" : "UP");
+                        /** LOG_DBG("joystick state: button %d is %s.\n", jse.number, down ? "DOWN" : "UP"); */
                         cb(-1,jse.number, down, -1, -1);
                     }
                     else if (jse.type == JS_EVENT_AXIS) {
@@ -270,11 +270,11 @@ int js_main(int argc, char *argv[], void (*cb)(int, int, int, int ,int))
                             else {
                                 tp_axes[jse.number / 2].y = jse.value;
                             }
-                            LOG_DBG("joystick state: axes %d is x=%d  y=%d.\n", jse.number / 2, tp_axes[jse.number / 2].x, tp_axes[jse.number / 2].y);
+                            /** LOG_DBG("joystick state: axes %d is x=%d  y=%d.\n", jse.number / 2, tp_axes[jse.number / 2].x, tp_axes[jse.number / 2].y); */
                             cb(jse.number/2, -1, -1, tp_axes[jse.number / 2].x, tp_axes[jse.number / 2].y);
                         }
                         else {
-                            LOG_DBG("joystick state: axes %d is %s=%d.\n", jse.number / 2, ((jse.number & 1) == 0) ? "x" : "y", jse.value);
+                            /** LOG_DBG("joystick state: axes %d is %s=%d.\n", jse.number / 2, ((jse.number & 1) == 0) ? "x" : "y", jse.value); */
                         }
                     }
                 }

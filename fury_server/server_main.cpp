@@ -249,7 +249,7 @@ int main(int argc,char *argv[])
     if (0)
 	    speed_monitor_init();
 
-	pthread_create(&display_thd, NULL, display_thread, NULL);
+//	pthread_create(&display_thd, NULL, display_thread, NULL);
 	pthread_create(&work_thd, NULL, work_main_thread, NULL);
 	pthread_create(&socket_thd, NULL, server_socket_thread, NULL);
 	pthread_create(&speed_thd, NULL, speed_monitor_thread, NULL);

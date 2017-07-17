@@ -345,30 +345,26 @@ error:
 #define DEV_PATH "/dev/input/event0"   //difference is possible
 
 
-void js_event_callback(int axes, int keycode, int is_down, int x, int y)
-{
-    printf("%d,%d,%d,(%d,%d)",axes, keycode, is_down, x, y);
-    return;
-}
 
 
 int test_input_key_event(void)
 {
     int keys_fd;
     struct input_event t;
-    keys_fd=open(DEV_PATH, O_RDONLY);
-    if(keys_fd <= 0)
-    {
-        printf("open %s device error!\n", DEV_PATH);
-        return -1;
-    }
-
+ 
 #if 1
 {
     JS_MAIN(js_event_callback);
     return 1;
 }
 #endif
+
+   keys_fd=open(DEV_PATH, O_RDONLY);
+    if(keys_fd <= 0)
+    {
+        printf("open %s device error!\n", DEV_PATH);
+        return -1;
+    }
 
     while(1)
     {
@@ -379,7 +375,7 @@ int test_input_key_event(void)
             if(t.type==EV_KEY) {
                 if(t.value == 1)
                 {
-                    printf("key %d %s\n", t.code, (t.value) ? "Pressed" : "Released");
+                    // printf("key %d %s\n", t.code, (t.value) ? "Pressed" : "Released");
                     if (t.code == 304) {
                          do_action(MSG_TANK_GO_FORWARD);  
                     }
