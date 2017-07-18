@@ -246,7 +246,8 @@ int main(int argc,char *argv[])
 
 	wiringPiSetup();
 
-//	speed_monitor_init();
+    if (0)
+	    speed_monitor_init();
 
 	pthread_create(&display_thd, NULL, display_thread, NULL);
 	pthread_create(&work_thd, NULL, work_main_thread, NULL);

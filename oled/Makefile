@@ -15,9 +15,14 @@ BUILD_SRC := \
 
 all:$(BUILD_SRC)
 	$(LD) -o $(BUILD_TARGET) $(CCFLAGS) $(BUILD_SRC) $(DEPSFLAGS)  
+	cp ./$(BUILD_TARGET) $(DESTDIR)/$(BUILD_TARGET)
 
 install:
 	cp ./$(BUILD_TARGET) $(DESTDIR)/$(BUILD_TARGET)
+	ldconfig
+
+uninstall:
+	rm $(DESTDIR)/$(BUILD_TARGET)
 
 clean:  
 	rm -rf *.o $(BUILD_TARGET) 

@@ -12,6 +12,13 @@ install:
 	$(MAKE) -C ./servoBlaster/user install
 	$(MAKE) -C ./fury_server install
 
+uninstall:
+	$(MAKE) -C ./js uninstall
+	$(MAKE) -C ./oled uninstall
+	$(MAKE) -C ./servoBlaster/user uninstall
+	$(MAKE) -C ./fury_server uninstall
+
+
 clean:
 	$(MAKE) -C ./js clean
 	$(MAKE) -C ./oled clean

@@ -168,13 +168,12 @@ void debug_list(void)
     }
 }
 
-#if 1
 typedef struct _axes_t {
     int x;
     int y;
 } AXES_T;
 
-int main(int argc, char* argv[])
+int js_main(int argc, char *argv[], void (*cb)(int, int, int, int ,int))
 {
     int fd, rc;
     int op_times = 0;
@@ -252,6 +251,7 @@ int main(int argc, char* argv[])
                     }
 
                     if (jse.type  == JS_EVENT_BUTTON) {
+                        int down = ((buttons_state & (1 << jse.number)) == (1 << jse.number));
                         if (jse.value) {
                             buttons_state |= (1 << jse.number);
                         }
@@ -259,7 +259,8 @@ int main(int argc, char* argv[])
                             buttons_state &= ~(1 << jse.number);
                         }
 
-                        LOG_DBG("joystick state: button %d is %s.\n", jse.number, ((buttons_state & (1 << jse.number)) == (1 << jse.number)) ? "DOWN" : "UP");
+                        LOG_DBG("joystick state: button %d is %s.\n", jse.number, down ? "DOWN" : "UP");
+                        cb(-1,jse.number, down, -1, -1);
                     }
                     else if (jse.type == JS_EVENT_AXIS) {
                         if (tp_axes) {
@@ -270,6 +271,7 @@ int main(int argc, char* argv[])
                                 tp_axes[jse.number / 2].y = jse.value;
                             }
                             LOG_DBG("joystick state: axes %d is x=%d  y=%d.\n", jse.number / 2, tp_axes[jse.number / 2].x, tp_axes[jse.number / 2].y);
+                            cb(jse.number/2, -1, -1, tp_axes[jse.number / 2].x, tp_axes[jse.number / 2].y);
                         }
                         else {
                             LOG_DBG("joystick state: axes %d is %s=%d.\n", jse.number / 2, ((jse.number & 1) == 0) ? "x" : "y", jse.value);
@@ -295,5 +297,10 @@ int main(int argc, char* argv[])
 
     return 0;
 }
-#endif
+
+int main(int argc, char *argv[]) {
+    return js_main(argc, argv, NULL);
+}
+
+
 

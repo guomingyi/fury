@@ -162,7 +162,6 @@ public final static int MSG_CAMERA_CLOSE = 2004;
 #define MSG_CAMERA_CLOSE  2004
 //协议
 //////////////////////////////////////////////////////////////////////
-
 int sendToServer(char *buffer);
 int sendToServer(int evt);
 int sendToServer();
@@ -198,11 +197,22 @@ int write_to_servo(int pin, int duty) ;
 int get_host_ip(char *ip);
 int kill_process(char *proc);
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
+int js_main(int argc, char *argv[], void (*cb)(int, int, int, int ,int));
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
 
-
-
-
+#define JS_MAIN(x) \
+do { \
+    js_main(NULL, NULL, x); \
+} \
+while(0)
 
 
 

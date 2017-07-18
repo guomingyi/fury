@@ -209,7 +209,7 @@ int test_socket_init(void)
 	int i,j = 0;
 
 
-#if 1
+#if 0
 {
 	printf("---test---\n");
 
@@ -344,10 +344,17 @@ error:
 
 #define DEV_PATH "/dev/input/event0"   //difference is possible
 
+
+void js_event_callback(int axes, int keycode, int is_down, int x, int y)
+{
+    printf("%d,%d,%d,(%d,%d)",axes, keycode, is_down, x, y);
+    return;
+}
+
+
 int test_input_key_event(void)
 {
     int keys_fd;
-    char ret[2];
     struct input_event t;
     keys_fd=open(DEV_PATH, O_RDONLY);
     if(keys_fd <= 0)
@@ -355,6 +362,14 @@ int test_input_key_event(void)
         printf("open %s device error!\n", DEV_PATH);
         return -1;
     }
+
+#if 1
+{
+    JS_MAIN(js_event_callback);
+    return 1;
+}
+#endif
+
     while(1)
     {
         if(read(keys_fd, &t, sizeof(t)) == sizeof(t))

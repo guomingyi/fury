@@ -10,11 +10,8 @@ CCFLAGS += -g
 DEPSFLAGS := -lpthread 
 DEPSFLAGS += -lwiringPi
 DEPSFLAGS += -lm -lcrypt -lrt -lm
-#DEPSFLAGS += -loled
-#DEPSFLAGS += -ljsx
-DEPSFLAGS += \
-    $(DYNAMIC)/liboled.so \
-    $(DYNAMIC)/libjsx.so
+DEPSFLAGS += -loled
+DEPSFLAGS += -ljsx
 
 BUILD_SRC := \
     $(shell find . -name '*.c' -o -name '*.cpp' -o -name '*.h')
@@ -24,6 +21,9 @@ all:$(BUILD_SRC)
 
 install:
 	cp ./$(BUILD_TARGET) $(DESTDIR)/$(BUILD_TARGET)
+
+uninstall:
+	rm $(DESTDIR)/$(BUILD_TARGET)
 
 clean:  
 	rm -rf *.o $(BUILD_TARGET) 

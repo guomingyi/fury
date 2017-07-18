@@ -31,8 +31,7 @@
 #include "oled.h"
 #include "bmp.h"
 
-
-//int oled_test(void)
+int oled_test(void);
 int main(void)
 {	
 	return oled_test();
