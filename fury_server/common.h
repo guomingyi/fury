@@ -46,13 +46,19 @@ extern int debug;
 
 #define USE_TCP 0   //TCP or UDP
 
+
+/* export MJPG_STREAMER_PATH=/home/pi/pi/github/mjpg-streamer/main */
+// export PATH=$MJPG_STREAMER_PATH:$PATH
+// export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$MJPG_STREAMER_PATH
+
+
 #if UBUNTU_HOST
-  #define EXEC_CAMERA_CMD ". /home/android/pi/github/mjpg-streamer/exec &"
+  #define EXEC_CAMERA_CMD "$MJPG_STREAMER_PATH/../exec  &"
 #else
-  #define EXEC_CAMERA_CMD "/home/pi/coding/github/mjpg-streamer/exec udp &"
+  #define EXEC_CAMERA_CMD "$MJPG_STREAMER_PATH/../exec udp &"
 #endif
 
-#define SERVER_IP_ADDR "192.168.43.91"
+#define SERVER_IP_ADDR "192.168.1.99"
 
 #define DEFAULT_PORT  9090
 
