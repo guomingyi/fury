@@ -107,7 +107,7 @@ int server_socket_init(void)
     send_socket_init();
 	do_action(MSG_CAMERA_CLOSE);
 
-    system("sudo /home/pi/pi/github/fury/ServoBlaster/user/servod --p1pins=0,0,0,0,0,16,18");
+    system("sudo /usr/local/sbin/servod --p1pins=0,0,0,0,0,16,18");
 	
     while(1) {
 		

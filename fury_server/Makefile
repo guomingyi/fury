@@ -1,5 +1,5 @@
-BUILD_TARGET := fury_server
-
+BUILD_TARGET := furyd
+DAEMON := furyd
 DESTDIR?=/usr/local/bin
 DYNAMIC:=/usr/local/lib
 
@@ -19,11 +19,19 @@ BUILD_SRC := \
 all:$(BUILD_SRC)
 	$(LD) -o $(BUILD_TARGET) $(CCFLAGS) $(BUILD_SRC) $(DEPSFLAGS)  
 
-install:
-	cp ./$(BUILD_TARGET) $(DESTDIR)/$(BUILD_TARGET)
+install: $(BUILD_TARGET)
+	[ "`id -u`" = "0" ] || { echo "Must be run as root"; exit 1; }
+	cp -f $(BUILD_TARGET) /usr/local/sbin/$(DAEMON)
+	cp -f init-script /etc/init.d/$(BUILD_TARGET).sh
+	chmod 755 /etc/init.d/$(BUILD_TARGET).sh
+	update-rc.d $(BUILD_TARGET).sh defaults 92 08
+	/etc/init.d/$(BUILD_TARGET).sh start
+
 
 uninstall:
-	rm $(DESTDIR)/$(BUILD_TARGET)
+	rm -rf $(DESTDIR)/$(BUILD_TARGET)
+	rm -rf /usr/local/sbin/$(DAEMON)
+	rm -rf /etc/init.d/$(BUILD_TARGET).sh
 
 clean:  
 	rm -rf *.o $(BUILD_TARGET) 

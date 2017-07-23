@@ -28,9 +28,9 @@ int debug = 0;
 static int mCurrTmp = 0;
 
 static pthread_t socket_thd = 0;
-static pthread_t work_thd = 0;
+static pthread_t cpu_t_thd = 0;
 static pthread_t display_thd = 0;
-static pthread_t speed_thd = 0;
+static pthread_t js_thd = 0;
 
 
 static double getCpuTmp(void)
@@ -114,7 +114,7 @@ static void speed_monitor_init(void) {
 	wiringPiISR(RIGHT_SPEED_B, INT_EDGE_FALLING, &myInterrupt13) ;
 }
 
-static void *speed_monitor_thread(void *args) {
+static void *js_monitor_thread(void *args) {
 
 	//for(;;) {
 	//	delay(2000);
@@ -126,7 +126,7 @@ static void *speed_monitor_thread(void *args) {
 	return NULL;
 }
 
-static void *work_main_thread(void *args) 
+static void *cpu_temp_thd(void *args) 
 {
 	while(1) 
 	{
@@ -246,18 +246,18 @@ int main(int argc,char *argv[])
 
 	wiringPiSetup();
 
-    if (0)
-	    speed_monitor_init();
+    /** if (0) */
+		/** speed_monitor_init(); */
 
 //	pthread_create(&display_thd, NULL, display_thread, NULL);
-	pthread_create(&work_thd, NULL, work_main_thread, NULL);
+	pthread_create(&cpu_t_thd, NULL, cpu_temp_thd, NULL);
 	pthread_create(&socket_thd, NULL, server_socket_thread, NULL);
-	pthread_create(&speed_thd, NULL, speed_monitor_thread, NULL);
+	pthread_create(&js_thd, NULL, js_monitor_thread, NULL);
 
-	pthread_join(work_thd, NULL); 
+	pthread_join(cpu_t_thd, NULL); 
 	pthread_join(socket_thd, NULL); 
-	pthread_join(display_thd, NULL); 
-	pthread_join(speed_thd, NULL);
+	/** pthread_join(display_thd, NULL);  */
+	pthread_join(js_thd, NULL);
 
 	return EXIT_SUCCESS;
 }
